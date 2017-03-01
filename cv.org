@@ -14,5 +14,5 @@ Desarrollador de Software
 
 ** Correo
 
-$\int_{a}^{b} omaralvarado@gmail.com dx$
+$$\int_{a}^{b} omaralvarado@gmail.com dx$$
 
