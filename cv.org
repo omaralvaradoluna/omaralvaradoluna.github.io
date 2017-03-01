@@ -6,7 +6,7 @@ Desarrollador de Software
 /Ingeniería en Computación/ UNAM
 
 * Lenguajes
-- PHP
-- MySQL
-- [[http://www.python.com][Python]]
+- [[http://php.net][PHP]]
+- [[http://mysql.com][MySQL]]
+- [[http://www.python.org][Python]]
 
