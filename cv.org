@@ -10,3 +10,9 @@ Desarrollador de Software
 - [[http://mysql.com][MySQL]]
 - [[http://www.python.org][Python]]
 
+* Información de Contacto
+
+** Correo
+
+$\int_{a}^{b} omaralvarado@gmail.com dx$
+
