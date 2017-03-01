@@ -1,0 +1,12 @@
+#+TITLE: Omar Alonso Alvarado Luna
+* Resumen
+Desarrollador de Software 
+
+* Educacion
+/Ingeniería en Computación/ UNAM
+
+* Lenguajes
+- PHP
+- MySQL
+- [[http://www.python.com][Python]]
+
