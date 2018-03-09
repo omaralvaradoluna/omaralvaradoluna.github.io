@@ -4,7 +4,7 @@
 
 Sometimes we can get errors in /var/log/messages about rsyslog 
 
-#+=BEGIN_SRC
+#+BEGIN_SRC bash
 ... rsyslogd: omfwd: TCPSendBuf error -2027, destruct TCP Connection to logs-01.loggly.com:514 [v8.33.0 try http://www.rsyslog.com/e/2027 ]
 
-#+=END_SRC
+#+END_SRC
