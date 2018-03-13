@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-03-09 Fri 16:41 -->
+<!-- 2018-03-12 Mon 19:16 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title></title>
@@ -232,20 +232,107 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org1482a34">1. Blog @omaralvaradoluna</a>
+<li><a href="#orge1e8350">1. Blog @omaralvaradoluna</a>
 <ul>
-<li><a href="#orgf7727a4">1.1. The right way to restart syslog</a></li>
+<li><a href="#orgc3729ca">1.1. Obtaining the most recent amazon machine image (AMI) with Ubuntu 16.04 LTS with aws cli and jq</a></li>
+<li><a href="#org4128ab1">1.2. TCPSendBuf problems</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org1482a34" class="outline-2">
-<h2 id="org1482a34"><span class="section-number-2">1</span> Blog @omaralvaradoluna</h2>
+<div id="outline-container-orge1e8350" class="outline-2">
+<h2 id="orge1e8350"><span class="section-number-2">1</span> Blog @omaralvaradoluna</h2>
 <div class="outline-text-2" id="text-1">
-</div><div id="outline-container-orgf7727a4" class="outline-3">
-<h3 id="orgf7727a4"><span class="section-number-3">1.1</span> The right way to restart syslog</h3>
+</div><div id="outline-container-orgc3729ca" class="outline-3">
+<h3 id="orgc3729ca"><span class="section-number-3">1.1</span> Obtaining the most recent amazon machine image (AMI) with Ubuntu 16.04 LTS with aws cli and jq</h3>
 <div class="outline-text-3" id="text-1-1">
+<p>
+First of all we have to obtain id of ubuntu provider, because we have to be confident that we have a secure source of the public ami. So you can find several ami's at <a href="https://cloud-images.ubuntu.com/locator/ec2/">https://cloud-images.ubuntu.com/locator/ec2/</a>
+</p>
+
+<p>
+We get this id 099720109477.
+</p>
+
+<p>
+So we can do a query, retrieving all images from owner-id 099720109477 and state available for architecture x86<sub>64</sub> 
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">aws ec2 describe-images --filters "Name=owner-id,Values=099720109477" "Name=state,Values=available" "Name=architecture,Values=x86_64"
+</pre>
+</div>
+
+<p>
+We'll add a query to retrieve all objects where name starts with `ubuntu/images/ebs-ssd/ubuntu-xenial-16.04`
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">--query 'Images[?Name!=`null`]|[?starts_with(Name, `ubuntu/images/ebs-ssd/ubuntu-xenial-16.04`) == `true` ]'
+</pre>
+</div>
+
+<p>
+It is important to add a filter to retrieve only objects with name not equal to null, otherwise we'll get an error from aws cli.
+</p>
+
+<p>
+Finally, with jq we'll sort the array with the .Name element,  in order to get the most recent image, we'll add reverse and first options
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">| jq -r 'sort_by( .Name ) | reverse | first | .
+</pre>
+</div>
+
+<p>
+And it is done
+</p>
+
+<div class="org-src-container">
+<pre class="src src-json">{
+  "VirtualizationType": "paravirtual",
+  "Description": "Canonical, Ubuntu, 16.04 LTS, amd64 xenial image build on 2018-03-06",
+  "Hypervisor": "xen",
+  "ImageId": "ami-ea9b6597",
+  "RootDeviceType": "ebs",
+  "State": "available",
+  "BlockDeviceMappings": [
+    {
+      "DeviceName": "/dev/sda1",
+      "Ebs": {
+	"Encrypted": false,
+	"DeleteOnTermination": true,
+	"VolumeType": "gp2",
+	"VolumeSize": 8,
+	"SnapshotId": "snap-0d0054404ab4cf236"
+      }
+    },
+    {
+      "DeviceName": "/dev/sdb",
+      "VirtualName": "ephemeral0"
+    }
+  ],
+  "Architecture": "x86_64",
+  "ImageLocation": "099720109477/ubuntu/images/ebs-ssd/ubuntu-xenial-16.04-amd64-server-20180306",
+  "KernelId": "aki-919dcaf8",
+  "OwnerId": "099720109477",
+  "RootDeviceName": "/dev/sda1",
+  "CreationDate": "2018-03-07T08:44:13.000Z",
+  "Public": true,
+  "ImageType": "machine",
+  "Name": "ubuntu/images/ebs-ssd/ubuntu-xenial-16.04-amd64-server-20180306"
+}
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org4128ab1" class="outline-3">
+<h3 id="org4128ab1"><span class="section-number-3">1.2</span> TCPSendBuf problems</h3>
+<div class="outline-text-3" id="text-1-2">
 <p>
 Sometimes we can get errors in /var/log/messages about rsyslog 
 </p>
@@ -254,13 +341,39 @@ Sometimes we can get errors in /var/log/messages about rsyslog
 <pre class="src src-bash">... rsyslogd: omfwd: TCPSendBuf error -2027, destruct TCP Connection to logs-01.loggly.com:514 [v8.33.0 try http://www.rsyslog.com/e/2027 ]
 </pre>
 </div>
+
+<p>
+it could be caused by a network connectivity interruption, but also by a misconfiguration in rsyslog files.
+</p>
+
+<p>
+The /var/log/messages should be reviewd with a tail -f
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">tail -f /var/log/messages
+</pre>
+</div>
+
+<p>
+We can restart rsyslog and see what is happening
+</p>
+
+<p>
+If we need to look for TCPSendBuf inside serveral files it is easier with following command 
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">sudo grep -rnw './'  -e 'TCPSendBuf'
+</pre>
+</div>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Omar Alvarado</p>
-<p class="date">Created: 2018-03-09 Fri 16:41</p>
+<p class="date">Created: 2018-03-12 Mon 19:16</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

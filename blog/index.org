@@ -1,6 +1,73 @@
 * Blog @omaralvaradoluna
 
-** The right way to restart syslog
+** Obtaining the most recent amazon machine image (AMI) with Ubuntu 16.04 LTS with aws cli and jq
+
+First of all we have to obtain id of ubuntu provider, because we have to be confident that we have a secure source of the public ami. So you can find several ami's at https://cloud-images.ubuntu.com/locator/ec2/
+
+We get this id 099720109477.
+
+So we can do a query, retrieving all images from owner-id 099720109477 and state available for architecture x86_64 
+
+#+BEGIN_SRC bash
+aws ec2 describe-images --filters "Name=owner-id,Values=099720109477" "Name=state,Values=available" "Name=architecture,Values=x86_64"
+#+END_SRC
+
+We'll add a query to retrieve all objects where name starts with `ubuntu/images/ebs-ssd/ubuntu-xenial-16.04`
+
+#+BEGIN_SRC bash
+--query 'Images[?Name!=`null`]|[?starts_with(Name, `ubuntu/images/ebs-ssd/ubuntu-xenial-16.04`) == `true` ]'
+#+END_SRC
+
+It is important to add a filter to retrieve only objects with name not equal to null, otherwise we'll get an error from aws cli.
+
+Finally, with jq we'll sort the array with the .Name element,  in order to get the most recent image, we'll add reverse and first options
+
+#+BEGIN_SRC bash
+| jq -r 'sort_by( .Name ) | reverse | first | .
+#+END_SRC
+
+And it is done
+
+#+BEGIN_SRC json
+
+{
+  "VirtualizationType": "paravirtual",
+  "Description": "Canonical, Ubuntu, 16.04 LTS, amd64 xenial image build on 2018-03-06",
+  "Hypervisor": "xen",
+  "ImageId": "ami-ea9b6597",
+  "RootDeviceType": "ebs",
+  "State": "available",
+  "BlockDeviceMappings": [
+    {
+      "DeviceName": "/dev/sda1",
+      "Ebs": {
+        "Encrypted": false,
+        "DeleteOnTermination": true,
+        "VolumeType": "gp2",
+        "VolumeSize": 8,
+        "SnapshotId": "snap-0d0054404ab4cf236"
+      }
+    },
+    {
+      "DeviceName": "/dev/sdb",
+      "VirtualName": "ephemeral0"
+    }
+  ],
+  "Architecture": "x86_64",
+  "ImageLocation": "099720109477/ubuntu/images/ebs-ssd/ubuntu-xenial-16.04-amd64-server-20180306",
+  "KernelId": "aki-919dcaf8",
+  "OwnerId": "099720109477",
+  "RootDeviceName": "/dev/sda1",
+  "CreationDate": "2018-03-07T08:44:13.000Z",
+  "Public": true,
+  "ImageType": "machine",
+  "Name": "ubuntu/images/ebs-ssd/ubuntu-xenial-16.04-amd64-server-20180306"
+}
+
+#+END_SRC
+ 
+
+** TCPSendBuf problems
 
 Sometimes we can get errors in /var/log/messages about rsyslog 
 
@@ -8,3 +75,20 @@ Sometimes we can get errors in /var/log/messages about rsyslog
 ... rsyslogd: omfwd: TCPSendBuf error -2027, destruct TCP Connection to logs-01.loggly.com:514 [v8.33.0 try http://www.rsyslog.com/e/2027 ]
 
 #+END_SRC
+
+it could be caused by a network connectivity interruption, but also by a misconfiguration in rsyslog files.
+
+The /var/log/messages should be reviewd with a tail -f
+
+#+BEGIN_SRC bash
+tail -f /var/log/messages
+#+END_SRC
+
+We can restart rsyslog and see what is happening
+
+If we need to look for TCPSendBuf inside serveral files it is easier with following command 
+
+#+BEGIN_SRC bash
+sudo grep -rnw './'  -e 'TCPSendBuf'
+#+END_SRC
+
