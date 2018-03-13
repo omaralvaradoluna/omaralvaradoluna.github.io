@@ -1,6 +1,35 @@
 * Blog @omaralvaradoluna
 
+
+** TCPSendBuf problems
+written on: <2018-03-09 Fri>
+
+Sometimes we can get errors in /var/log/messages about rsyslog 
+
+#+BEGIN_SRC bash
+... rsyslogd: omfwd: TCPSendBuf error -2027, destruct TCP Connection to logs-01.loggly.com:514 [v8.33.0 try http://www.rsyslog.com/e/2027 ]
+
+#+END_SRC
+
+it could be caused by a network connectivity interruption, but also by a misconfiguration in rsyslog files.
+
+The /var/log/messages should be reviewd with a tail -f
+
+#+BEGIN_SRC bash
+tail -f /var/log/messages
+#+END_SRC
+
+We can restart rsyslog and see what is happening
+
+If we need to look for TCPSendBuf inside serveral files it is easier with following command 
+
+#+BEGIN_SRC bash
+sudo grep -rnw './'  -e 'TCPSendBuf'
+#+END_SRC
+
+
 ** Obtaining the most recent amazon machine image (AMI) with Ubuntu 16.04 LTS with aws cli and jq
+written on: <2018-03-12 Mon>
 
 First of all we have to obtain id of ubuntu provider, because we have to be confident that we have a secure source of the public ami. So you can find several ami's at https://cloud-images.ubuntu.com/locator/ec2/
 
@@ -66,29 +95,3 @@ And it is done
 
 #+END_SRC
  
-
-** TCPSendBuf problems
-
-Sometimes we can get errors in /var/log/messages about rsyslog 
-
-#+BEGIN_SRC bash
-... rsyslogd: omfwd: TCPSendBuf error -2027, destruct TCP Connection to logs-01.loggly.com:514 [v8.33.0 try http://www.rsyslog.com/e/2027 ]
-
-#+END_SRC
-
-it could be caused by a network connectivity interruption, but also by a misconfiguration in rsyslog files.
-
-The /var/log/messages should be reviewd with a tail -f
-
-#+BEGIN_SRC bash
-tail -f /var/log/messages
-#+END_SRC
-
-We can restart rsyslog and see what is happening
-
-If we need to look for TCPSendBuf inside serveral files it is easier with following command 
-
-#+BEGIN_SRC bash
-sudo grep -rnw './'  -e 'TCPSendBuf'
-#+END_SRC
-
