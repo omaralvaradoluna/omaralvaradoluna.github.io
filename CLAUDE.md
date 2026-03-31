@@ -59,6 +59,37 @@ math-blog/
 ### Descripción
 Skill para crear y publicar artículos en el blog matemático de Omar Alvarado.
 
+### Tono y Estilo Narrativo
+
+**OBLIGATORIO:** Todos los artículos deben seguir este tono:
+
+> *"La arquitectura oculta de los sistemas que colapsan"*
+
+**Estilo Isaac Asimov / Fundación:**
+- **Determinismo estructural**: Los sistemas tienen destinos escritos en sus ecuaciones
+- **Psicohistoria computacional**: Las matemáticas predicen el colapso inevitable
+- **Frialdad analítica**: Sin sentimentalismos, solo estructuras y sus consecuencias
+- **Inevitabilidad**: "No hay cuarta opción", "La única salida termodinámica"
+- **Escala épica**: Hablar de civilizaciones, sistemas, colapsos globales
+
+**Vocabulario preferido:**
+- "Arquitectura oculta" en lugar de "estructura"
+- "Colapso" en lugar de "falla"
+- "Invariantes" en lugar de "propiedades"
+- "Transición de fase" en lugar de "cambio"
+- "Aniquilación de información" en lugar de "pérdida de datos"
+- "Saturación computacional" en lugar de "sobrecarga"
+- "Firma matemática irreducible" en lugar de "característica"
+
+**Estructura narrativa:**
+1. Plantear el sistema como un organismo con destino predeterminado
+2. Revelar la estructura matemática subyacente (la "arquitectura oculta")
+3. Demostrar por qué el colapso es inevitable (teoremas, ecuaciones)
+4. Concluir con las únicas opciones disponibles (sin escapatoria romántica)
+
+**Ejemplo de tono correcto:**
+> "El nodo jerárquico no falla por incompetencia; colapsa porque su arquitectura computacional —un FSA de Nivel 3— carece del poder expresivo para contener la variedad de un sistema Turing-Completo. La ecuación de Ashby no perdona: H(R) < H(D). No hay voluntad que supere un teorema."
+
 ### Uso
 ```
 @publisher publica en mi blog
