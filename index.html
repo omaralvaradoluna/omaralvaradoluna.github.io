@@ -3,392 +3,760 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omar Alvarado | Computational Mathematics</title>
+    <title>Omar Alvarado Luna | Computational Mathematics</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <style>
         :root {
-            --bg: #fafafa;
-            --bg-alt: #f0f0f0;
-            --text: #1a1a1a;
-            --text-dim: #555;
-            --accent: #c23616;
-            --accent-dark: #922610;
-            --border: #ddd;
-            --code-bg: #282c34;
-            --math-blue: #1e3a5f;
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-hover: #1a1a25;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255,255,255,0.7);
+            --text-muted: rgba(255,255,255,0.4);
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --accent-secondary: #8b5cf6;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --border: rgba(255,255,255,0.08);
+            --gold: #fbbf24;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html { scroll-behavior: smooth; }
+
         body {
-            font-family: 'Source Serif 4', Georgia, serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.7;
-            font-size: 18px;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        /* Header */
-        header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            color: white;
-            padding: 60px 20px;
-            text-align: center;
-            position: relative;
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
             overflow: hidden;
         }
 
-        header::before {
-            content: "";
+        .bg-animation::before {
+            content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image:
-                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.03) 0%, transparent 50%),
-                radial-gradient(circle at 80% 50%, rgba(255,255,255,0.03) 0%, transparent 50%);
-            pointer-events: none;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(79, 172, 254, 0.05) 0%, transparent 40%);
+            animation: bgMove 20s ease-in-out infinite;
         }
 
-        /* Mathematical pattern overlay */
-        header::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+        @keyframes bgMove {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, 2%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-1deg); }
+        }
+
+        /* Grid pattern overlay */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
             opacity: 0.03;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30Z' fill='none' stroke='white' stroke-width='1'/%3E%3C/svg%3E");
-            pointer-events: none;
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 1;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            letter-spacing: 3px;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            font-family: 'Source Serif 4', serif;
-            font-size: 3rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            letter-spacing: -1px;
-        }
-
-        .subtitle {
-            font-family: 'Source Sans 3', sans-serif;
-            font-size: 1.1rem;
-            color: rgba(255,255,255,0.7);
-            font-weight: 400;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
         }
 
         /* Navigation */
         nav {
-            background: white;
-            border-bottom: 1px solid var(--border);
-            padding: 15px 20px;
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 100;
-        }
-
-        nav ul {
-            list-style: none;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 20px 40px;
             display: flex;
-            justify-content: center;
-            gap: 40px;
-            max-width: 800px;
-            margin: 0 auto;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s ease;
         }
 
-        nav a {
-            font-family: 'Source Sans 3', sans-serif;
-            text-decoration: none;
-            color: var(--text-dim);
-            font-size: 15px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            transition: color 0.2s;
-        }
-
-        nav a:hover { color: var(--accent); }
-
-        /* Main content */
-        main {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 60px 20px;
-        }
-
-        /* Section titles */
-        .section-title {
-            font-family: 'Source Sans 3', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
+        .nav-logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
             letter-spacing: 2px;
-            color: var(--accent);
-            text-transform: uppercase;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--accent);
-            display: inline-block;
+            color: var(--text-secondary);
         }
 
-        /* Featured equation */
-        .featured-eq {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: white;
-            padding: 40px;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 60px;
+        .nav-logo span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
             position: relative;
         }
 
-        .featured-eq .katex { font-size: 1.8rem; }
-
-        .featured-eq-caption {
-            font-family: 'Source Sans 3', sans-serif;
-            font-size: 14px;
-            color: rgba(255,255,255,0.6);
-            margin-top: 20px;
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-1);
+            transition: width 0.3s ease;
         }
 
-        /* Article cards */
-        .articles {
+        .nav-links a:hover { color: var(--text-primary); }
+        .nav-links a:hover::after { width: 100%; }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 40px 80px;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent);
+            margin-bottom: 30px;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            font-weight: 600;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease 0.1s both;
+        }
+
+        .hero h1 .gradient-text {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 50px;
+            font-weight: 300;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        /* Floating equation */
+        .hero-equation {
+            display: inline-block;
+            padding: 25px 50px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.8s ease 0.3s both, float 6s ease-in-out infinite;
+        }
+
+        .hero-equation .katex { font-size: 1.5rem; }
+
+        .equation-label {
+            display: block;
+            margin-top: 15px;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scroll indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-muted);
+            font-size: 12px;
+            animation: fadeInUp 0.8s ease 0.5s both;
+        }
+
+        .scroll-indicator .mouse {
+            width: 24px;
+            height: 40px;
+            border: 2px solid var(--text-muted);
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .scroll-indicator .mouse::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 2px;
+            animation: scrollDown 2s infinite;
+        }
+
+        @keyframes scrollDown {
+            0% { opacity: 1; top: 8px; }
+            100% { opacity: 0; top: 20px; }
+        }
+
+        /* Section styles */
+        section {
+            padding: 100px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        /* Article Cards */
+        .articles-grid {
             display: grid;
             gap: 30px;
         }
 
         .article-card {
-            background: white;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 40px;
+            padding: 40px;
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 30px;
-            transition: all 0.3s ease;
+            border-radius: 24px;
             text-decoration: none;
             color: inherit;
-            display: block;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .article-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-1);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
         }
 
         .article-card:hover {
-            border-color: var(--accent);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            transform: translateY(-2px);
+            background: var(--bg-card-hover);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-5px);
+            box-shadow:
+                0 20px 40px rgba(0,0,0,0.3),
+                0 0 60px var(--accent-glow);
         }
 
-        .article-meta {
-            font-family: 'Source Sans 3', sans-serif;
-            font-size: 13px;
-            color: var(--text-dim);
-            margin-bottom: 10px;
+        .article-card:hover::before { transform: scaleX(1); }
+
+        .article-visual {
             display: flex;
-            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .article-tag {
-            background: var(--bg-alt);
-            padding: 3px 10px;
-            border-radius: 4px;
+        .article-visual img {
+            max-width: 100%;
+            border-radius: 8px;
+            transition: transform 0.4s ease;
+        }
+
+        .article-card:hover .article-visual img {
+            transform: scale(1.05);
+        }
+
+        .article-visual .placeholder-icon {
+            font-size: 4rem;
+            opacity: 0.5;
+        }
+
+        .article-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .article-tags {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 6px 14px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 50px;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        .tag.gold {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: rgba(251, 191, 36, 0.3);
+            color: var(--gold);
         }
 
         .article-card h3 {
-            font-size: 1.4rem;
-            margin-bottom: 12px;
-            color: var(--math-blue);
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 15px;
             line-height: 1.3;
+            transition: color 0.3s ease;
         }
+
+        .article-card:hover h3 { color: var(--accent); }
 
         .article-card p {
-            color: var(--text-dim);
-            font-size: 16px;
-            line-height: 1.6;
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 20px;
         }
 
-        .article-card .equation-preview {
-            background: var(--bg-alt);
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 15px;
-            text-align: center;
+        .article-equation {
             font-family: 'JetBrains Mono', monospace;
             font-size: 14px;
-            color: var(--math-blue);
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            color: var(--accent);
+            display: inline-block;
         }
 
-        /* Research areas */
+        .article-meta {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .read-more {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent);
+            font-weight: 500;
+            transition: gap 0.3s ease;
+        }
+
+        .article-card:hover .read-more { gap: 12px; }
+
+        /* Research Section */
         .research-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
         }
 
-        .research-item {
-            background: white;
+        .research-card {
+            padding: 35px;
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            padding: 25px;
-            border-radius: 8px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        .research-item h4 {
-            font-family: 'Source Sans 3', sans-serif;
-            font-size: 16px;
+        .research-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gradient-1);
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.3s ease;
+        }
+
+        .research-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .research-card:hover::before { transform: scaleY(1); }
+
+        .research-icon {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .research-card h4 {
+            font-size: 1.1rem;
             font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--math-blue);
+            margin-bottom: 10px;
         }
 
-        .research-item p {
+        .research-card p {
+            color: var(--text-secondary);
             font-size: 14px;
-            color: var(--text-dim);
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         /* Footer */
         footer {
-            background: #1a1a2e;
-            color: rgba(255,255,255,0.6);
-            padding: 40px 20px;
-            text-align: center;
-            font-family: 'Source Sans 3', sans-serif;
+            padding: 60px 40px;
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .footer-brand {
+            font-family: 'JetBrains Mono', monospace;
             font-size: 14px;
+            color: var(--text-secondary);
         }
-
-        footer a {
-            color: rgba(255,255,255,0.8);
-            text-decoration: none;
-        }
-
-        footer a:hover { color: white; }
 
         .footer-links {
             display: flex;
-            justify-content: center;
             gap: 30px;
-            margin-bottom: 20px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover { color: var(--accent); }
+
+        .footer-copy {
+            width: 100%;
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+            margin-top: 30px;
+            font-size: 13px;
+            color: var(--text-muted);
         }
 
         /* Responsive */
+        @media (max-width: 900px) {
+            .article-card {
+                grid-template-columns: 1fr;
+            }
+
+            .article-visual {
+                height: 200px;
+            }
+
+            nav { padding: 15px 20px; }
+            .nav-links { gap: 20px; }
+            section { padding: 60px 20px; }
+        }
+
         @media (max-width: 600px) {
-            h1 { font-size: 2rem; }
-            nav ul { gap: 20px; }
-            .featured-eq { padding: 25px; }
-            .featured-eq .katex { font-size: 1.2rem; }
+            .hero h1 { font-size: 2.5rem; }
+            .hero-subtitle { font-size: 1rem; }
+            .hero-equation { padding: 20px 30px; }
+            .hero-equation .katex { font-size: 1.1rem; }
+            .nav-links { display: none; }
+            .article-card { padding: 25px; }
+            .section-header h2 { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="header-content">
-        <div class="logo">COMPUTATIONAL MATHEMATICS</div>
-        <h1>Omar Alvarado</h1>
-        <p class="subtitle">Exploring the boundaries of computation, complexity, and mathematical structures</p>
-    </div>
-</header>
+<div class="bg-animation"></div>
+<div class="grid-overlay"></div>
 
 <nav>
-    <ul>
-        <li><a href="#articles">Articles</a></li>
-        <li><a href="#research">Research</a></li>
+    <div class="nav-logo"><span>&lambda;</span> OMAR ALVARADO</div>
+    <ul class="nav-links">
+        <li><a href="#articles">Artículos</a></li>
+        <li><a href="#research">Investigación</a></li>
         <li><a href="cv.html">CV</a></li>
-        <li><a href="https://github.com/omaralvaradoluna">GitHub</a></li>
+        <li><a href="https://github.com/omaralvaradoluna" target="_blank">GitHub</a></li>
     </ul>
 </nav>
 
-<main>
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">Matemáticas Computacionales</div>
+        <h1>
+            Explorando los<br>
+            <span class="gradient-text">límites de la computación</span>
+        </h1>
+        <p class="hero-subtitle">
+            Investigación en teoría de la complejidad, autómatas celulares, cibernética
+            y los fundamentos matemáticos de la computación.
+        </p>
+        <div class="hero-equation">
+            <span id="eq-hero"></span>
+            <span class="equation-label">Ley de Variedad Requerida de Ashby</span>
+        </div>
+    </div>
+    <div class="scroll-indicator">
+        <div class="mouse"></div>
+        <span>Scroll</span>
+    </div>
+</section>
 
-    <!-- Featured equation -->
-    <div class="featured-eq">
-        <span id="eq-display"></span>
-        <p class="featured-eq-caption">Ashby's Law of Requisite Variety: Only variety can absorb variety</p>
+<section id="articles">
+    <div class="section-header">
+        <span class="section-label">Publicaciones</span>
+        <h2>Artículos Recientes</h2>
+        <p>Exploraciones en la frontera entre matemáticas, computación y sistemas complejos</p>
     </div>
 
-    <!-- Articles -->
-    <section id="articles">
-        <h2 class="section-title">Recent Articles</h2>
+    <div class="articles-grid">
 
-        <div class="articles">
-
-            <a href="articles/homeostasis-rule110.html" class="article-card">
-                <div class="article-meta">
-                    <span class="article-tag">Cybernetics</span>
-                    <span class="article-tag">Cellular Automata</span>
-                    <span>March 2026</span>
+        <a href="articles/homeostasis-rule110.html" class="article-card">
+            <div class="article-visual">
+                <img src="images/portada.png" alt="Regla 110">
+            </div>
+            <div class="article-content">
+                <div class="article-tags">
+                    <span class="tag">Cibernética</span>
+                    <span class="tag">Autómatas Celulares</span>
+                    <span class="tag gold">Nuevo</span>
                 </div>
                 <h3>La Imposibilidad de la Homeostasis en Sistemas Turing-Completos</h3>
-                <p>Una exploracion cibernetica de la Regla 110 y la Ley de Variedad Requerida de Ashby. Por que los sistemas con capacidad computacional universal no pueden alcanzar equilibrio.</p>
-                <div class="equation-preview">V(regulador) >= V(perturbaciones)</div>
-            </a>
-
-            <a href="articles/collatz-turing-machine.html" class="article-card">
+                <p>Una exploración cibernética de la Regla 110 y la Ley de Variedad Requerida de Ashby. ¿Por qué los sistemas con capacidad computacional universal no pueden alcanzar equilibrio?</p>
+                <div class="article-equation">V(regulador) ≥ V(perturbaciones)</div>
                 <div class="article-meta">
-                    <span class="article-tag">Turing Machines</span>
-                    <span class="article-tag">Number Theory</span>
-                    <span>February 2026</span>
+                    <span>Marzo 2026</span>
+                    <span>•</span>
+                    <span>12 min lectura</span>
+                    <span class="read-more">Leer artículo →</span>
                 </div>
-                <h3>Collatz Conjecture: A Turing Machine Visualization</h3>
-                <p>Simulacion interactiva de la conjetura de Collatz implementada como maquina de Turing. Visualizacion en tiempo real del proceso computacional sobre representacion binaria.</p>
-                <div class="equation-preview">n -> n/2 (par) | 3n+1 (impar)</div>
-            </a>
+            </div>
+        </a>
 
+        <a href="articles/collatz-turing-machine.html" class="article-card">
+            <div class="article-visual">
+                <div class="placeholder-icon">⚙️</div>
+            </div>
+            <div class="article-content">
+                <div class="article-tags">
+                    <span class="tag">Máquinas de Turing</span>
+                    <span class="tag">Teoría de Números</span>
+                </div>
+                <h3>Conjetura de Collatz: Visualización como Máquina de Turing</h3>
+                <p>Simulación interactiva de la conjetura de Collatz implementada como máquina de Turing. Visualización en tiempo real del proceso computacional sobre representación binaria.</p>
+                <div class="article-equation">n → n/2 (par) | 3n+1 (impar)</div>
+                <div class="article-meta">
+                    <span>Febrero 2026</span>
+                    <span>•</span>
+                    <span>Interactivo</span>
+                    <span class="read-more">Explorar →</span>
+                </div>
+            </div>
+        </a>
+
+    </div>
+</section>
+
+<section id="research">
+    <div class="section-header">
+        <span class="section-label">Áreas de Investigación</span>
+        <h2>Intereses de Investigación</h2>
+        <p>Campos donde convergen matemáticas, computación y filosofía</p>
+    </div>
+
+    <div class="research-grid">
+        <div class="research-card">
+            <div class="research-icon">∞</div>
+            <h4>Complejidad Computacional</h4>
+            <p>Turing-completitud, indecidibilidad y los límites fundamentales de la computación algorítmica.</p>
         </div>
-    </section>
-
-    <!-- Research areas -->
-    <section id="research" style="margin-top: 60px;">
-        <h2 class="section-title">Research Interests</h2>
-
-        <div class="research-grid">
-            <div class="research-item">
-                <h4>Computational Complexity</h4>
-                <p>Turing completeness, undecidability, and the limits of algorithmic computation.</p>
-            </div>
-            <div class="research-item">
-                <h4>Cellular Automata</h4>
-                <p>Emergent behavior, Wolfram's classification, and universal computation in simple systems.</p>
-            </div>
-            <div class="research-item">
-                <h4>Cybernetics</h4>
-                <p>Feedback loops, homeostasis, variety, and control in complex systems.</p>
-            </div>
-            <div class="research-item">
-                <h4>Number Theory</h4>
-                <p>Collatz conjecture, prime distribution, and computational approaches to open problems.</p>
-            </div>
+        <div class="research-card">
+            <div class="research-icon">▦</div>
+            <h4>Autómatas Celulares</h4>
+            <p>Comportamiento emergente, clasificación de Wolfram y computación universal en sistemas simples.</p>
         </div>
-    </section>
-
-</main>
+        <div class="research-card">
+            <div class="research-icon">⟳</div>
+            <h4>Cibernética</h4>
+            <p>Bucles de retroalimentación, homeostasis, variedad y control en sistemas complejos.</p>
+        </div>
+        <div class="research-card">
+            <div class="research-icon">π</div>
+            <h4>Teoría de Números</h4>
+            <p>Conjetura de Collatz, distribución de primos y enfoques computacionales a problemas abiertos.</p>
+        </div>
+    </div>
+</section>
 
 <footer>
-    <div class="footer-links">
-        <a href="https://github.com/omaralvaradoluna">GitHub</a>
-        <a href="https://medium.com/@alonsoluna">Medium</a>
-        <a href="cv.html">Curriculum Vitae</a>
+    <div class="footer-content">
+        <div class="footer-brand">&lambda; Omar Alvarado Luna</div>
+        <div class="footer-links">
+            <a href="https://github.com/omaralvaradoluna" target="_blank">GitHub</a>
+            <a href="https://medium.com/@alonsoluna" target="_blank">Medium</a>
+            <a href="cv.html">CV</a>
+        </div>
+        <div class="footer-copy">
+            © 2026 Omar Alvarado Luna — Construido con matemáticas y curiosidad.
+        </div>
     </div>
-    <p>&copy; 2026 Omar Alvarado Luna. Built with mathematics.</p>
 </footer>
 
-<!-- KaTeX for math rendering -->
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script>
-    // Render featured equation
-    katex.render("V_{\\text{regulador}} \\geq V_{\\text{perturbaciones}}", document.getElementById('eq-display'), {
+    katex.render("V_{\\text{regulador}} \\geq V_{\\text{perturbaciones}}", document.getElementById('eq-hero'), {
         displayMode: true,
         throwOnError: false
+    });
+
+    // Navbar scroll effect
+    window.addEventListener('scroll', () => {
+        const nav = document.querySelector('nav');
+        if (window.scrollY > 50) {
+            nav.style.background = 'rgba(10, 10, 15, 0.95)';
+        } else {
+            nav.style.background = 'rgba(10, 10, 15, 0.8)';
+        }
     });
 </script>
 
