@@ -1,0 +1,2425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COLLATZ TM // VT100</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        :root {
+            --green: #33ff33;
+            --green-dim: #00aa00;
+            --green-dark: #005500;
+            --green-glow: #33ff3380;
+            --black: #0a0a0a;
+            --gray: #1a1a1a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--black);
+            color: var(--green);
+            font-family: 'VT323', 'Courier New', monospace;
+            min-height: 100vh;
+            padding: 12px;
+            font-size: 16px;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        /* CRT scanlines effect */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* CRT flicker */
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            50% { opacity: 1; }
+            100% { opacity: 0.98; }
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.3) 100%);
+            pointer-events: none;
+            z-index: 9998;
+            animation: flicker 0.1s infinite;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+
+        h1 {
+            font-size: 28px;
+            font-weight: normal;
+            color: var(--green);
+            text-shadow: 0 0 10px var(--green-glow), 0 0 20px var(--green-glow);
+            margin-bottom: 4px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: var(--green-dim);
+            font-size: 14px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--green-dark);
+            padding-bottom: 8px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            padding: 8px;
+            border: 1px solid var(--green-dark);
+            background: var(--gray);
+        }
+
+        input[type="text"] {
+            background: var(--black);
+            border: 1px solid var(--green-dim);
+            color: var(--green);
+            padding: 6px 10px;
+            width: 100px;
+            font-family: inherit;
+            font-size: 18px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 5px var(--green-glow);
+        }
+
+        input[type="range"] {
+            width: 80px;
+            accent-color: var(--green);
+        }
+
+        button {
+            padding: 6px 16px;
+            border: 1px solid var(--green-dim);
+            background: var(--black);
+            color: var(--green);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.1s;
+        }
+
+        button:hover {
+            background: var(--green-dark);
+            border-color: var(--green);
+            text-shadow: 0 0 5px var(--green-glow);
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        button.active {
+            background: var(--green-dark);
+            color: var(--green);
+            text-shadow: 0 0 8px var(--green-glow);
+        }
+
+        label {
+            font-size: 14px;
+            color: var(--green-dim);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        input[type="checkbox"] {
+            accent-color: var(--green);
+        }
+
+        /* Status bar */
+        .status {
+            display: flex;
+            gap: 16px;
+            padding: 8px 12px;
+            background: var(--gray);
+            border: 1px solid var(--green-dark);
+            margin-bottom: 12px;
+            font-size: 18px;
+            flex-wrap: wrap;
+        }
+
+        .status span { color: var(--green-dim); }
+        .status b { color: var(--green); text-shadow: 0 0 5px var(--green-glow); }
+
+        .state-badge {
+            padding: 2px 12px;
+            border: 1px solid var(--green);
+            color: var(--green);
+            text-shadow: 0 0 8px var(--green-glow);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .state-badge.halt {
+            background: var(--green-dark);
+            animation: none;
+        }
+
+        /* Tape */
+        .tape-container {
+            background: var(--black);
+            border: 1px solid var(--green-dim);
+            padding: 20px 12px 8px;
+            margin-bottom: 12px;
+        }
+
+        .tape-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            overflow-x: auto;
+            padding: 0 4px;
+        }
+
+        .tape-ellipsis {
+            color: var(--green-dark);
+            font-size: 14px;
+            align-self: center;
+            margin: 0 4px;
+        }
+
+        .tape-cell {
+            width: 36px;
+            min-width: 36px;
+            height: 52px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .head-indicator {
+            position: absolute;
+            top: -20px;
+            font-size: 14px;
+            color: var(--green);
+            white-space: nowrap;
+            text-shadow: 0 0 8px var(--green-glow);
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .cell-box {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--green-dark);
+            font-size: 20px;
+            transition: all 0.1s;
+        }
+
+        .cell-blank {
+            background: var(--black);
+            color: var(--green-dark);
+            border-style: dashed;
+        }
+
+        .cell-0 {
+            background: var(--black);
+            color: var(--green-dim);
+        }
+
+        .cell-1 {
+            background: var(--green-dark);
+            color: var(--green);
+            text-shadow: 0 0 5px var(--green-glow);
+        }
+
+        .cell-head {
+            border: 2px solid var(--green) !important;
+            box-shadow: 0 0 10px var(--green-glow), inset 0 0 5px var(--green-glow);
+        }
+
+        .cell-index {
+            font-size: 10px;
+            color: var(--green-dark);
+            margin-top: 2px;
+        }
+
+        .tape-legend {
+            text-align: center;
+            font-size: 12px;
+            color: var(--green-dark);
+            margin-top: 8px;
+            border-top: 1px dashed var(--green-dark);
+            padding-top: 6px;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 700px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--black);
+            border: 1px solid var(--green-dark);
+            padding: 12px;
+        }
+
+        .panel h3 {
+            font-size: 16px;
+            font-weight: normal;
+            margin: 0 0 10px;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--green-dark);
+            padding-bottom: 6px;
+        }
+
+        /* Transition table */
+        .trans-table {
+            width: 100%;
+            font-size: 14px;
+            border-collapse: collapse;
+        }
+
+        .trans-table th {
+            padding: 4px 6px;
+            text-align: left;
+            border-bottom: 1px solid var(--green-dim);
+            font-size: 12px;
+            color: var(--green-dim);
+            font-weight: normal;
+            text-transform: uppercase;
+        }
+
+        .trans-table td {
+            padding: 3px 6px;
+            border-bottom: 1px solid var(--green-dark);
+            color: var(--green-dim);
+        }
+
+        .trans-table tr.active td {
+            background: var(--green-dark);
+            color: var(--green);
+        }
+
+        .trans-table .st { color: var(--green); }
+        .trans-table .wr { color: var(--green); text-shadow: 0 0 3px var(--green-glow); }
+
+        .alphabet-box {
+            margin-top: 12px;
+            padding: 8px;
+            border: 1px dashed var(--green-dark);
+            font-size: 13px;
+            color: var(--green-dark);
+            line-height: 1.5;
+        }
+
+        .alphabet-box .title {
+            color: var(--green-dim);
+            margin-bottom: 4px;
+        }
+
+        /* Trajectory */
+        .traj-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .traj-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 3px 0;
+            border-bottom: 1px solid var(--green-dark);
+            font-size: 15px;
+        }
+
+        .traj-idx { color: var(--green-dark); width: 24px; text-align: right; }
+        .traj-n { width: 70px; text-align: right; color: var(--green); }
+        .traj-n.halt { text-shadow: 0 0 10px var(--green-glow); }
+        .traj-bits { color: var(--green-dark); font-size: 13px; flex: 1; }
+        .traj-len { width: 30px; text-align: center; font-size: 13px; color: var(--green-dark); }
+        .traj-diff { font-size: 14px; width: 30px; text-align: center; }
+        .traj-diff.neg { color: var(--green); }
+        .traj-diff.pos { color: var(--green-dim); }
+        .traj-diff.zero { color: var(--green-dark); }
+        .traj-op { color: var(--green-dark); font-size: 12px; width: 50px; }
+
+        .chart-container { margin-top: 10px; }
+        .chart-label { font-size: 12px; color: var(--green-dark); margin-bottom: 4px; }
+        .chart-svg {
+            width: 100%;
+            height: 60px;
+            background: var(--black);
+            border: 1px solid var(--green-dark);
+        }
+
+        /* Insight */
+        .insight {
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px solid var(--green-dark);
+            font-size: 15px;
+            color: var(--green-dim);
+            line-height: 1.6;
+        }
+
+        .insight .label { color: var(--green); text-transform: uppercase; }
+        .insight code { color: var(--green); }
+        .insight b { color: var(--green); text-shadow: 0 0 5px var(--green-glow); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--black); }
+        ::-webkit-scrollbar-thumb { background: var(--green-dark); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
+
+        /* Boot message */
+        .boot {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--black);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: var(--green);
+            font-size: 18px;
+            animation: bootFade 2s forwards;
+            animation-delay: 1.5s;
+        }
+
+        @keyframes bootFade {
+            to { opacity: 0; pointer-events: none; }
+        }
+
+        .boot-text { animation: typewriter 1s steps(30); overflow: hidden; white-space: nowrap; }
+        @keyframes typewriter { from { width: 0; } to { width: 100%; } }
+
+        /* Live Head Unit */
+        .head-unit {
+            background: var(--black);
+            border: 2px solid var(--green);
+            margin-bottom: 12px;
+            padding: 10px;
+            box-shadow: 0 0 15px var(--green-glow), inset 0 0 20px rgba(0, 50, 0, 0.3);
+        }
+
+        .head-unit-title {
+            text-align: center;
+            color: var(--green);
+            font-size: 14px;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px var(--green-glow);
+            animation: pulse 1s infinite;
+        }
+
+        .head-unit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .head-unit-grid { grid-template-columns: 1fr; }
+        }
+
+        .head-section {
+            padding: 8px;
+            border: 1px solid var(--green-dark);
+            background: var(--gray);
+        }
+
+        .section-label {
+            font-size: 10px;
+            color: var(--green-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--green-dark);
+            padding-bottom: 4px;
+        }
+
+        .inputs-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: flex-start;
+        }
+
+        .inputs-section .section-label {
+            width: 100%;
+        }
+
+        .head-cell {
+            flex: 1;
+            min-width: 50px;
+            text-align: center;
+            padding: 6px;
+            border: 1px solid var(--green-dark);
+            background: var(--black);
+        }
+
+        .head-cell.current {
+            border: 2px solid var(--green);
+            box-shadow: 0 0 8px var(--green-glow);
+        }
+
+        .cell-label {
+            font-size: 9px;
+            color: var(--green-dark);
+            margin-bottom: 2px;
+        }
+
+        .cell-value {
+            font-size: 22px;
+            color: var(--green);
+            text-shadow: 0 0 5px var(--green-glow);
+            line-height: 1;
+        }
+
+        .cell-bits {
+            font-size: 10px;
+            color: var(--green-dim);
+            margin-top: 2px;
+            font-family: monospace;
+        }
+
+        .state-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .state-box, .carry-box {
+            padding: 8px;
+            border: 1px solid var(--green-dim);
+            background: var(--black);
+            text-align: center;
+        }
+
+        .state-box {
+            border-color: var(--green);
+            box-shadow: inset 0 0 10px rgba(51, 255, 51, 0.1);
+        }
+
+        .state-label, .carry-label {
+            font-size: 9px;
+            color: var(--green-dim);
+        }
+
+        .state-value {
+            font-size: 18px;
+            color: var(--green);
+            text-shadow: 0 0 8px var(--green-glow);
+            font-weight: bold;
+        }
+
+        .state-bits {
+            font-size: 12px;
+            color: var(--green-dim);
+            font-family: monospace;
+        }
+
+        .carry-value {
+            font-size: 20px;
+            color: var(--green);
+        }
+
+        .carry-box.active {
+            border-color: var(--green);
+            background: var(--green-dark);
+        }
+
+        .outputs-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .output-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 8px;
+            background: var(--black);
+            border: 1px solid var(--green-dark);
+        }
+
+        .output-label {
+            font-size: 11px;
+            color: var(--green-dim);
+        }
+
+        .output-value {
+            font-size: 14px;
+            color: var(--green);
+            font-weight: bold;
+        }
+
+        .halt-row {
+            border-color: var(--green-dark);
+        }
+
+        .halt-row.active {
+            background: var(--green-dark);
+            border-color: var(--green);
+            animation: pulse 0.3s infinite;
+        }
+
+        .halt-section {
+            grid-column: 1 / -1;
+            background: var(--black);
+            border: 1px dashed var(--green-dark);
+            padding: 8px;
+            text-align: center;
+        }
+
+        .halt-formula {
+            font-size: 11px;
+            color: var(--green-dim);
+            font-family: monospace;
+        }
+
+        .halt-check {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 1px solid var(--green-dark);
+            text-align: center;
+            line-height: 12px;
+            font-size: 10px;
+            margin: 0 2px;
+            vertical-align: middle;
+        }
+
+        .halt-check.checked {
+            background: var(--green-dark);
+            color: var(--green);
+            border-color: var(--green);
+        }
+
+        .halt-result {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--green-dim);
+        }
+
+        .halt-result.active {
+            color: var(--green);
+            text-shadow: 0 0 10px var(--green-glow);
+        }
+
+        .head-unit.halted {
+            border-color: var(--green);
+            box-shadow: 0 0 30px var(--green-glow);
+        }
+
+        .head-unit.halted .head-unit-title {
+            animation: none;
+            background: var(--green-dark);
+            padding: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="boot" id="boot">
+        <div class="boot-text">COLLATZ TURING MACHINE v1.0</div>
+        <div style="margin-top: 8px; color: var(--green-dim);">INITIALIZING...</div>
+    </div>
+
+    <div class="container">
+        <h1>[ COLLATZ TM ]</h1>
+        <p class="subtitle">> M = (Q, Σ, Γ, δ, q₀, □, F) // BINARY TAPE REWRITING SYSTEM</p>
+
+        <div class="controls">
+            <span style="color: var(--green-dim);">INPUT:</span>
+            <input type="text" id="inputN" value="27" onkeydown="if(event.key==='Enter')init()">
+            <button onclick="init()">INIT</button>
+            <button id="btnStep" onclick="doStep()">STEP</button>
+            <button id="btnRun" onclick="toggleRun()">RUN</button>
+            <button id="btnEnd" onclick="runToEnd()">FAST</button>
+            <label>
+                <input type="checkbox" id="microMode" checked onchange="updateStepBtn()"> MICRO
+            </label>
+            <span style="color: var(--green-dark);">SPEED:</span>
+            <input type="range" min="10" max="300" value="250" id="speedSlider">
+        </div>
+
+        <div class="status" id="status">
+            <span>N=<b id="statVal">27</b></span>
+            <span>BITS=<b id="statBits">5</b></span>
+            <span>μSTEPS=<b id="statUsteps">0</b></span>
+            <span>COLLATZ=<b id="statCsteps">0</b></span>
+            <span class="state-badge" id="statState">LEER</span>
+        </div>
+
+        <div class="tape-container" id="tapeContainer">
+            <div class="tape-wrapper" id="tapeWrapper"></div>
+            <div class="tape-legend">&lt;-- MSB [∞ ZEROS] | SIGNIFICANT BITS | LSB --&gt;</div>
+        </div>
+
+        <!-- LIVE HEAD UNIT -->
+        <div class="head-unit" id="headUnit">
+            <div class="head-unit-title">▼ CABEZAL COLLATZ — ESTADO EN VIVO ▼</div>
+            <div class="head-unit-grid">
+                <!-- Inputs -->
+                <div class="head-section inputs-section">
+                    <div class="section-label">INPUTS</div>
+                    <div class="head-cell">
+                        <div class="cell-label">PREV</div>
+                        <div class="cell-value" id="headPrev">□</div>
+                        <div class="cell-bits" id="headPrevBits">00</div>
+                    </div>
+                    <div class="head-cell current">
+                        <div class="cell-label">CURR</div>
+                        <div class="cell-value" id="headCurr">1</div>
+                        <div class="cell-bits" id="headCurrBits">10</div>
+                    </div>
+                    <div class="head-cell">
+                        <div class="cell-label">NEXT</div>
+                        <div class="cell-value" id="headNext">0</div>
+                        <div class="cell-bits" id="headNextBits">01</div>
+                    </div>
+                </div>
+
+                <!-- State Register -->
+                <div class="head-section state-section">
+                    <div class="section-label">MEMORIA</div>
+                    <div class="state-box">
+                        <div class="state-label">STATE[2:0]</div>
+                        <div class="state-value" id="headState">SEEK</div>
+                        <div class="state-bits" id="headStateBits">000</div>
+                    </div>
+                    <div class="carry-box" id="carryBox">
+                        <div class="carry-label">CARRY</div>
+                        <div class="carry-value" id="headCarry">-</div>
+                    </div>
+                </div>
+
+                <!-- Outputs -->
+                <div class="head-section outputs-section">
+                    <div class="section-label">OUTPUTS</div>
+                    <div class="output-row">
+                        <span class="output-label">WRITE:</span>
+                        <span class="output-value" id="headWrite">-</span>
+                    </div>
+                    <div class="output-row">
+                        <span class="output-label">MOVE:</span>
+                        <span class="output-value" id="headMove">→</span>
+                    </div>
+                    <div class="output-row halt-row" id="haltRow">
+                        <span class="output-label">HALT:</span>
+                        <span class="output-value" id="headHalt">0</span>
+                    </div>
+                </div>
+
+                <!-- Halt Detector -->
+                <div class="head-section halt-section" id="haltDetector">
+                    <div class="halt-formula">
+                        <span class="halt-check" id="haltCheck1">□</span> STATE=SEEK ∧
+                        <span class="halt-check" id="haltCheck2">□</span> PREV=□ ∧
+                        <span class="halt-check" id="haltCheck3">□</span> CURR=1 ∧
+                        <span class="halt-check" id="haltCheck4">□</span> NEXT=□
+                        → <span class="halt-result" id="haltResult">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h3>// TRANSITION δ</h3>
+                <table class="trans-table" id="transTable"></table>
+                <div class="alphabet-box">
+                    <div class="title">> STRING REWRITING SYSTEM:</div>
+                    <div>3n+1 = TRANSDUCER OVER Σ={0,1}</div>
+                    <div>ADD(e) = STATE WITH EXTRA=e</div>
+                    <div>EXTRA = CARRY + PREV_BIT</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>// TRAJECTORY</h3>
+                <div class="traj-list" id="trajList"></div>
+                <div class="chart-container" id="chartContainer" style="display:none;">
+                    <div class="chart-label">> TAPE LENGTH vs TIME</div>
+                    <svg class="chart-svg" id="chartSvg" viewBox="0 0 300 60"></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="insight">
+            <div class="label">> STRING REWRITING SYSTEM (SRS)</div>
+            <div style="margin: 10px 0; padding: 8px; border: 1px solid var(--green-dark);">
+                <div style="margin-bottom: 8px; color: var(--green-dim);">ALPHABET: Σ = {0, 1}</div>
+                <div style="margin-bottom: 12px; color: var(--green-dim);">GOAL: w →* "1"</div>
+
+                <div style="margin-bottom: 6px;"><b>RULE ÷2:</b> IF LSB = 0</div>
+                <code style="display: block; margin-left: 20px;">w0 → w</code>
+
+                <div style="margin: 12px 0 6px;"><b>RULE 3n+1:</b> IF LSB = 1, APPLY LOCAL SUBSTITUTION WITH CARRY:</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px 16px; margin-left: 20px;">
+                    <code>⟨0,0,0⟩ → 0, c=0</code>
+                    <code>⟨1,0,0⟩ → 0, c=1</code>
+                    <code>⟨0,0,1⟩ → 1, c=0</code>
+                    <code>⟨1,0,1⟩ → 1, c=1</code>
+                    <code>⟨0,1,0⟩ → 1, c=0</code>
+                    <code>⟨1,1,0⟩ → 0, c=1</code>
+                    <code>⟨0,1,1⟩ → 0, c=1</code>
+                    <code>⟨1,1,1⟩ → 1, c=1</code>
+                </div>
+                <div style="margin: 8px 0 0 20px; color: var(--green-dark);">
+                    WHERE ⟨nᵢ, nᵢ₋₁, c⟩ = ⟨BIT, PREV_BIT, CARRY⟩
+                </div>
+                <div style="margin: 4px 0 0 20px; color: var(--green-dark);">
+                    INITIAL: c₀ = 1 (THE "+1")
+                </div>
+            </div>
+
+            <div class="label" style="margin-top: 12px;">> CONJECTURE</div>
+            <code style="display: block; margin: 6px 0;">∀w ∈ {0,1}⁺ : w →* "1"</code>
+            <div style="color: var(--green-dark);">// ALL BINARY STRINGS REDUCE TO "1"</div>
+        </div>
+
+        <!-- WOLFRAM RULES STATE MACHINE -->
+        <div class="insight" style="margin-top: 12px;">
+            <div class="label">> WOLFRAM RULES: FINITE STATE TRANSDUCER</div>
+            <div style="margin: 10px 0; display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
+                <div style="flex: 1; min-width: 340px;">
+                    <div style="color: var(--green-dim); margin-bottom: 6px;">STATE = ⟨CARRY⟩, INPUT = ⟨BITᵢ, BITᵢ₋₁⟩:</div>
+                    <svg viewBox="0 0 360 200" style="width: 100%; max-width: 360px; height: 200px;">
+                        <defs>
+                            <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#00aa00"/>
+                            </marker>
+                            <marker id="arrB" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#33ff33"/>
+                            </marker>
+                        </defs>
+
+                        <!-- State C=0 -->
+                        <circle cx="100" cy="100" r="35" fill="#001100" stroke="#33ff33" stroke-width="3"/>
+                        <text x="100" y="95" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="14">C=0</text>
+                        <text x="100" y="112" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="10">CARRY 0</text>
+
+                        <!-- State C=1 -->
+                        <circle cx="260" cy="100" r="35" fill="#002200" stroke="#00aa00" stroke-width="2"/>
+                        <text x="260" y="95" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">C=1</text>
+                        <text x="260" y="112" fill="#005500" text-anchor="middle" font-family="monospace" font-size="10">CARRY 1</text>
+
+                        <!-- Self-loop C=0 -> C=0 -->
+                        <path d="M75,70 Q50,30 100,60" stroke="#33ff33" stroke-width="1.5" fill="none" marker-end="url(#arrB)"/>
+                        <text x="55" y="35" fill="#33ff33" font-family="monospace" font-size="9">00→0</text>
+                        <text x="55" y="46" fill="#33ff33" font-family="monospace" font-size="9">01→1</text>
+                        <text x="55" y="57" fill="#33ff33" font-family="monospace" font-size="9">10→1</text>
+
+                        <!-- C=0 -> C=1 -->
+                        <path d="M135,90 L220,90" stroke="#00aa00" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+                        <text x="175" y="82" fill="#00aa00" font-family="monospace" font-size="10">11→0</text>
+
+                        <!-- Self-loop C=1 -> C=1 -->
+                        <path d="M285,70 Q310,30 260,60" stroke="#00aa00" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+                        <text x="290" y="35" fill="#00aa00" font-family="monospace" font-size="9">10→0</text>
+                        <text x="290" y="46" fill="#00aa00" font-family="monospace" font-size="9">11→1</text>
+
+                        <!-- C=1 -> C=0 -->
+                        <path d="M225,110 L140,110" stroke="#33ff33" stroke-width="1.5" fill="none" marker-end="url(#arrB)"/>
+                        <text x="175" y="125" fill="#33ff33" font-family="monospace" font-size="10">00→1</text>
+                        <text x="175" y="138" fill="#33ff33" font-family="monospace" font-size="10">01→0</text>
+
+                        <!-- Initial arrow to C=1 (for +1) -->
+                        <path d="M260,165 L260,140" stroke="#33ff33" stroke-width="2" fill="none" marker-end="url(#arrB)"/>
+                        <text x="260" y="180" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="10">START</text>
+                        <text x="260" y="192" fill="#005500" text-anchor="middle" font-family="monospace" font-size="9">(+1 = C₀=1)</text>
+
+                        <!-- Legend -->
+                        <text x="10" y="180" fill="#005500" font-family="monospace" font-size="9">INPUT: BITᵢ·BITᵢ₋₁</text>
+                        <text x="10" y="192" fill="#005500" font-family="monospace" font-size="9">OUTPUT: RESULT BIT</text>
+                    </svg>
+                </div>
+                <div style="flex: 1; min-width: 220px;">
+                    <div style="color: var(--green-dim); margin-bottom: 6px;">TRANSITION TABLE:</div>
+                    <pre style="font-size: 11px; line-height: 1.3; color: var(--green);">
+ STATE │ INPUT │ OUTPUT │ NEXT
+───────┼───────┼────────┼──────
+  C=0  │  0 0  │   0    │ C=0
+  C=0  │  0 1  │   1    │ C=0
+  C=0  │  1 0  │   1    │ C=0
+  C=0  │  1 1  │   0    │ C=1
+───────┼───────┼────────┼──────
+  C=1  │  0 0  │   1    │ C=0
+  C=1  │  0 1  │   0    │ C=1
+  C=1  │  1 0  │   0    │ C=1
+  C=1  │  1 1  │   1    │ C=1</pre>
+                    <div style="margin-top: 8px; color: var(--green-dark); font-size: 10px;">
+                        FORMULA:<br>
+                        OUT = (Bᵢ + Bᵢ₋₁ + C) MOD 2<br>
+                        C' = ⌊(Bᵢ + Bᵢ₋₁ + C) / 2⌋
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THE HUNTER'S VIEW -->
+        <div class="insight" style="margin-top: 12px;">
+            <div class="label">> THE HUNTER: 1D BEING WITH 3-CELL WINDOW</div>
+            <div style="margin: 10px 0; text-align: center;">
+                <svg viewBox="0 0 400 120" style="width: 100%; max-width: 400px; height: 120px;">
+                    <!-- Tape -->
+                    <rect x="20" y="50" width="30" height="30" fill="none" stroke="#003300" stroke-width="1"/>
+                    <text x="35" y="70" fill="#003300" text-anchor="middle" font-family="monospace" font-size="14">□</text>
+
+                    <rect x="50" y="50" width="30" height="30" fill="none" stroke="#003300" stroke-width="1"/>
+                    <text x="65" y="70" fill="#003300" text-anchor="middle" font-family="monospace" font-size="14">□</text>
+
+                    <!-- Window start -->
+                    <rect x="80" y="50" width="30" height="30" fill="#001100" stroke="#00aa00" stroke-width="2"/>
+                    <text x="95" y="70" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">1</text>
+                    <text x="95" y="45" fill="#005500" text-anchor="middle" font-family="monospace" font-size="9">PREV</text>
+
+                    <rect x="110" y="50" width="30" height="30" fill="#002200" stroke="#33ff33" stroke-width="3"/>
+                    <text x="125" y="70" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="14">0</text>
+                    <text x="125" y="45" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="9">CURRENT</text>
+
+                    <rect x="140" y="50" width="30" height="30" fill="#001100" stroke="#00aa00" stroke-width="2"/>
+                    <text x="155" y="70" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">1</text>
+                    <text x="155" y="45" fill="#005500" text-anchor="middle" font-family="monospace" font-size="9">NEXT</text>
+                    <!-- Window end -->
+
+                    <rect x="170" y="50" width="30" height="30" fill="none" stroke="#003300" stroke-width="1"/>
+                    <text x="185" y="70" fill="#003300" text-anchor="middle" font-family="monospace" font-size="14">□</text>
+
+                    <rect x="200" y="50" width="30" height="30" fill="none" stroke="#003300" stroke-width="1"/>
+                    <text x="215" y="70" fill="#003300" text-anchor="middle" font-family="monospace" font-size="14">□</text>
+
+                    <!-- Window bracket -->
+                    <path d="M82,85 L82,95 L168,95 L168,85" fill="none" stroke="#33ff33" stroke-width="2"/>
+                    <text x="125" y="110" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="11">HUNTER'S VIEW</text>
+
+                    <!-- Hunter icon -->
+                    <text x="125" y="25" fill="#33ff33" text-anchor="middle" font-size="20">▼</text>
+
+                    <!-- State box -->
+                    <rect x="250" y="40" width="130" height="50" fill="#001100" stroke="#00aa00" stroke-width="1"/>
+                    <text x="315" y="58" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="10">INTERNAL STATE</text>
+                    <text x="315" y="78" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="16">CARRY = 1</text>
+                </svg>
+            </div>
+            <div style="color: var(--green-dim); font-size: 12px; text-align: center; margin: 8px 0;">
+                THE HUNTER SEES ONLY 3 CELLS AND HIS CARRY.<br>
+                HE DOESN'T KNOW THE TAPE SIZE. HE JUST APPLIES RULES.
+            </div>
+        </div>
+
+        <!-- TAPE EVOLUTION EXAMPLE -->
+        <div class="insight" style="margin-top: 12px;">
+            <div class="label">> HUNTER'S JOURNEY: 5 → 16 → 1</div>
+            <div style="margin: 10px 0; font-family: monospace; font-size: 12px; overflow-x: auto;">
+                <div style="color: var(--green-dark); margin-bottom: 8px;">PHASE 1: APPLY 3n+1 (SCAN RIGHT WITH CARRY)</div>
+                <table style="border-collapse: collapse; width: 100%;">
+                    <tr style="color: var(--green-dark);">
+                        <td style="padding: 4px; border: 1px solid #003300; width: 50px;">STEP</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">TAPE STATE</td>
+                        <td style="padding: 4px; border: 1px solid #003300; width: 80px;">WINDOW</td>
+                        <td style="padding: 4px; border: 1px solid #003300; width: 50px;">CARRY</td>
+                        <td style="padding: 4px; border: 1px solid #003300; width: 50px;">WRITE</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">RULE</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□ [<b style="color:#33ff33">1</b>] 0 1 □</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□ <b>1</b> 0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1+0+1=2 → 0,C=1</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□ 0 [<b style="color:#33ff33">0</b>] 1 □</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1 <b>0</b> 1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0+1+1=2 → 0,C=1</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">2</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□ 0 0 [<b style="color:#33ff33">0</b>] □</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0 <b>1</b> □</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1+0+1=2 → 0,C=1</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">3</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□ 0 0 0 [<b style="color:#33ff33">0</b>] □</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1 <b>□</b> □</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□+1+1=2 → 0,C=1</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">4</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□ 0 0 0 0 [<b style="color:#33ff33">1</b>]</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0 <b>□</b> □</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">EMIT FINAL CARRY</td>
+                    </tr>
+                </table>
+
+                <div style="color: var(--green-dark); margin: 12px 0 8px;">PHASE 2: REWIND TO LSB</div>
+                <div style="color: var(--green);">← ← ← ← (HUNTER WALKS BACK TO FIND NEW LSB)</div>
+
+                <div style="color: var(--green-dark); margin: 12px 0 8px;">PHASE 3: CLEAN ZEROS (÷2 FOUR TIMES)</div>
+                <table style="border-collapse: collapse; width: 100%;">
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300; width: 50px;">5</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">[<b style="color:#33ff33">0</b>] 0 0 0 1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;" colspan="4">LSB=0 → DELETE → □ 0 0 0 1</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">6</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□ [<b style="color:#33ff33">0</b>] 0 0 1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;" colspan="4">LSB=0 → DELETE → □ □ 0 0 1</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">7</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□ □ [<b style="color:#33ff33">0</b>] 0 1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;" colspan="4">LSB=0 → DELETE → □ □ □ 0 1</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">8</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□ □ □ [<b style="color:#33ff33">0</b>] 1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;" colspan="4">LSB=0 → DELETE → □ □ □ □ 1</td>
+                    </tr>
+                    <tr style="color: var(--green); background: #001100;">
+                        <td style="padding: 4px; border: 1px solid #003300;">9</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□ □ □ □ [<b style="color:#33ff33">1</b>]</td>
+                        <td style="padding: 4px; border: 1px solid #003300;" colspan="4"><b style="color:#33ff33">LSB=1, TAPE="1" → HALT ✓</b></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- HUNTER'S MINIMAL AUTOMATON -->
+        <div class="insight" style="margin-top: 12px;">
+            <div class="label">> ANÁLISIS: ¿CUÁNTA MEMORIA NECESITA EL CAZADOR?</div>
+            <div style="margin: 12px 0; padding: 10px; border: 1px solid var(--green-dark);">
+                <div style="color: var(--green); margin-bottom: 8px;">PREGUNTA: ¿Puede el cazador operar con solo 1 bit de memoria?</div>
+                <div style="color: var(--green-dim); font-size: 13px; line-height: 1.6;">
+                    <b style="color: var(--green);">RESPUESTA: NO.</b> Necesita al menos <b>3 bits</b> (5-6 estados).<br><br>
+                    <u>Razón:</u> El cazador debe distinguir entre <b>fases</b> y trackear <b>carry</b>:
+                </div>
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 12px 0 12px 20px; font-size: 12px;">
+                    <span style="color: var(--green);">FASE SEEK:</span>
+                    <span style="color: var(--green-dim);">Buscar LSB, decidir par/impar</span>
+                    <span style="color: var(--green);">FASE DIV:</span>
+                    <span style="color: var(--green-dim);">Borrar ceros (÷2)</span>
+                    <span style="color: var(--green);">FASE MUL:</span>
+                    <span style="color: var(--green-dim);">Aplicar 3n+1 (requiere carry)</span>
+                    <span style="color: var(--green);">FASE BACK:</span>
+                    <span style="color: var(--green-dim);">Regresar al LSB</span>
+                </div>
+            </div>
+
+            <div class="label" style="margin-top: 16px;">> AUTÓMATA MÍNIMO DEL CAZADOR (5 ESTADOS)</div>
+            <div style="margin: 10px 0; text-align: center;">
+                <svg viewBox="0 0 500 200" style="width: 100%; max-width: 500px; height: 200px;">
+                    <defs>
+                        <marker id="arrG" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                            <path d="M0,0 L6,3 L0,6 Z" fill="#33ff33"/>
+                        </marker>
+                        <marker id="arrD" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                            <path d="M0,0 L6,3 L0,6 Z" fill="#00aa00"/>
+                        </marker>
+                    </defs>
+
+                    <!-- Estado SEEK -->
+                    <circle cx="60" cy="100" r="25" fill="#002200" stroke="#33ff33" stroke-width="2"/>
+                    <text x="60" y="95" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="10">SEEK</text>
+                    <text x="60" y="108" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="8">FASE 0</text>
+
+                    <!-- Estado DIV -->
+                    <circle cx="160" cy="50" r="25" fill="#001100" stroke="#00aa00" stroke-width="2"/>
+                    <text x="160" y="45" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="10">DIV</text>
+                    <text x="160" y="58" fill="#005500" text-anchor="middle" font-family="monospace" font-size="8">FASE 1</text>
+
+                    <!-- Estado MUL:C=0 -->
+                    <circle cx="160" cy="150" r="25" fill="#001100" stroke="#00aa00" stroke-width="2"/>
+                    <text x="160" y="145" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="9">MUL</text>
+                    <text x="160" y="158" fill="#005500" text-anchor="middle" font-family="monospace" font-size="8">C=0</text>
+
+                    <!-- Estado MUL:C=1 -->
+                    <circle cx="280" cy="150" r="25" fill="#002200" stroke="#33ff33" stroke-width="2"/>
+                    <text x="280" y="145" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="9">MUL</text>
+                    <text x="280" y="158" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="8">C=1</text>
+
+                    <!-- Estado BACK -->
+                    <circle cx="280" cy="50" r="25" fill="#001100" stroke="#00aa00" stroke-width="2"/>
+                    <text x="280" y="45" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="10">BACK</text>
+                    <text x="280" y="58" fill="#005500" text-anchor="middle" font-family="monospace" font-size="8">FASE 3</text>
+
+                    <!-- Estado HALT -->
+                    <circle cx="400" cy="100" r="25" fill="#003300" stroke="#33ff33" stroke-width="3"/>
+                    <circle cx="400" cy="100" r="20" fill="none" stroke="#33ff33" stroke-width="1"/>
+                    <text x="400" y="105" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="10">HALT</text>
+
+                    <!-- Transiciones -->
+                    <!-- SEEK -> DIV (LSB=0) -->
+                    <path d="M80,85 Q120,60 135,55" stroke="#00aa00" stroke-width="1.5" fill="none" marker-end="url(#arrD)"/>
+                    <text x="95" y="60" fill="#00aa00" font-family="monospace" font-size="8">0</text>
+
+                    <!-- SEEK -> MUL:C=1 (LSB=1, inicio con carry=1 por el +1) -->
+                    <path d="M80,115 Q120,140 140,150" stroke="#33ff33" stroke-width="1.5" fill="none" marker-end="url(#arrG)"/>
+                    <text x="95" y="145" fill="#33ff33" font-family="monospace" font-size="8">1→C=1</text>
+
+                    <!-- DIV self-loop (0) -->
+                    <path d="M145,30 Q130,10 175,30" stroke="#00aa00" stroke-width="1" fill="none" marker-end="url(#arrD)"/>
+                    <text x="158" y="15" fill="#00aa00" font-family="monospace" font-size="8">0→□</text>
+
+                    <!-- DIV -> SEEK (1) -->
+                    <path d="M135,60 Q100,80 80,90" stroke="#33ff33" stroke-width="1.5" fill="none" marker-end="url(#arrG)"/>
+                    <text x="90" y="80" fill="#33ff33" font-family="monospace" font-size="8">1</text>
+
+                    <!-- DIV -> HALT (□) -->
+                    <path d="M185,50 Q300,30 375,90" stroke="#005500" stroke-width="1" fill="none" marker-end="url(#arrD)" stroke-dasharray="3,3"/>
+                    <text x="280" y="35" fill="#005500" font-family="monospace" font-size="8">□</text>
+
+                    <!-- MUL:C=0 <-> MUL:C=1 -->
+                    <path d="M185,145 L255,145" stroke="#00aa00" stroke-width="1.5" fill="none" marker-end="url(#arrD)"/>
+                    <text x="220" y="138" fill="#00aa00" font-family="monospace" font-size="8">11→0</text>
+                    <path d="M255,155 L185,155" stroke="#33ff33" stroke-width="1.5" fill="none" marker-end="url(#arrG)"/>
+                    <text x="220" y="170" fill="#33ff33" font-family="monospace" font-size="8">0x→1</text>
+
+                    <!-- MUL self-loops -->
+                    <path d="M145,170 Q130,190 175,170" stroke="#00aa00" stroke-width="1" fill="none" marker-end="url(#arrD)"/>
+                    <text x="155" y="195" fill="#00aa00" font-family="monospace" font-size="7">0x,10</text>
+
+                    <path d="M295,170 Q310,190 265,170" stroke="#33ff33" stroke-width="1" fill="none" marker-end="url(#arrG)"/>
+                    <text x="285" y="195" fill="#33ff33" font-family="monospace" font-size="7">1x</text>
+
+                    <!-- MUL -> BACK (□) -->
+                    <path d="M160,125 Q180,90 255,55" stroke="#00aa00" stroke-width="1" fill="none" marker-end="url(#arrD)"/>
+                    <text x="195" y="80" fill="#00aa00" font-family="monospace" font-size="8">□</text>
+
+                    <path d="M295,130 Q310,90 295,65" stroke="#33ff33" stroke-width="1" fill="none" marker-end="url(#arrG)"/>
+                    <text x="310" y="95" fill="#33ff33" font-family="monospace" font-size="8">□→1</text>
+
+                    <!-- BACK -> SEEK -->
+                    <path d="M260,40 Q180,20 75,80" stroke="#33ff33" stroke-width="1.5" fill="none" marker-end="url(#arrG)"/>
+                    <text x="160" y="25" fill="#33ff33" font-family="monospace" font-size="8">□</text>
+
+                    <!-- BACK self-loop -->
+                    <path d="M265,30 Q250,10 295,30" stroke="#00aa00" stroke-width="1" fill="none" marker-end="url(#arrD)"/>
+                    <text x="278" y="15" fill="#00aa00" font-family="monospace" font-size="8">0,1←</text>
+
+                    <!-- SEEK -> HALT -->
+                    <path d="M85,100 Q200,100 375,100" stroke="#33ff33" stroke-width="2" fill="none" marker-end="url(#arrG)" stroke-dasharray="5,3"/>
+                    <text x="230" y="95" fill="#33ff33" font-family="monospace" font-size="9">□ ó tape="1"</text>
+                </svg>
+            </div>
+
+            <div class="label" style="margin-top: 16px;">> TABLA DE REGLAS DEL CAZADOR (VISIÓN LOCAL)</div>
+            <div style="margin: 10px 0; overflow-x: auto;">
+                <table style="border-collapse: collapse; width: 100%; font-size: 11px;">
+                    <tr style="color: var(--green-dim); background: var(--gray);">
+                        <td style="padding: 4px; border: 1px solid #003300;">ESTADO</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">PREV</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">CURR</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">NEXT</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→ESCRIBE</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→MUEVE</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→ESTADO</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">NOTA</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">SEEK</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">-</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">DIV</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">PAR: dividir</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">SEEK</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">-</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: #33ff33;">MUL:C=1</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">IMPAR: 3n+1</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">SEEK</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">-</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">-</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: #33ff33;">HALT</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">CINTA="1" ✓</td>
+                    </tr>
+                    <tr style="color: var(--green-dim); background: #0a0f0a;">
+                        <td style="padding: 4px; border: 1px solid #003300;">DIV</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">DIV</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">BORRAR CERO</td>
+                    </tr>
+                    <tr style="color: var(--green-dim); background: #0a0f0a;">
+                        <td style="padding: 4px; border: 1px solid #003300;">DIV</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">-</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">←</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">SEEK</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">NUEVO LSB</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=0</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">2·0+0+0=0</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=0</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">2·0+1+0=1</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=1</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">2·1+0+0=2</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=1</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">2·1+1+0=3</td>
+                    </tr>
+                    <tr style="color: var(--green); background: #0f1a0f;">
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=0</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">2·0+0+1=1</td>
+                    </tr>
+                    <tr style="color: var(--green); background: #0f1a0f;">
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=1</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">2·0+1+1=2</td>
+                    </tr>
+                    <tr style="color: var(--green); background: #0f1a0f;">
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=1</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">2·1+0+1=3</td>
+                    </tr>
+                    <tr style="color: var(--green); background: #0f1a0f;">
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:C=2</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">2·1+1+1=4 !</td>
+                    </tr>
+                    <tr style="color: var(--green-dim);">
+                        <td style="padding: 4px; border: 1px solid #003300;">MUL:*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">[C]</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">←</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">BACK</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">FIN: emitir carry</td>
+                    </tr>
+                    <tr style="color: var(--green-dim);">
+                        <td style="padding: 4px; border: 1px solid #003300;">BACK</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">0,1</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">-</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">←</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">BACK</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">REBOBINAR</td>
+                    </tr>
+                    <tr style="color: var(--green-dim);">
+                        <td style="padding: 4px; border: 1px solid #003300;">BACK</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">□</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">*</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">-</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">→</td>
+                        <td style="padding: 4px; border: 1px solid #003300;">SEEK</td>
+                        <td style="padding: 4px; border: 1px solid #003300; color: var(--green-dark);">NUEVO CICLO</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="margin-top: 12px; padding: 10px; border: 1px solid var(--green-dark); background: #0a0f0a;">
+                <div style="color: var(--green); margin-bottom: 6px;">OBSERVACIÓN CLAVE:</div>
+                <div style="color: var(--green-dim); font-size: 12px; line-height: 1.6;">
+                    Las reglas de multiplicación solo dependen de: <b style="color: var(--green);">(PREV, CURR, CARRY)</b><br>
+                    El bit NEXT <b>no se usa</b> para decidir qué escribir — solo se mira al avanzar.<br><br>
+                    <span style="color: var(--green);">FÓRMULA UNIVERSAL:</span><br>
+                    <code style="color: var(--green);">WRITE = (2·CURR + PREV + CARRY) mod 2</code><br>
+                    <code style="color: var(--green);">CARRY' = ⌊(2·CURR + PREV + CARRY) / 2⌋</code>
+                </div>
+            </div>
+
+            <div class="label" style="margin-top: 16px;">> LA ESENCIA DEL CAZADOR</div>
+            <div style="margin: 10px 0; text-align: center;">
+                <svg viewBox="0 0 450 160" style="width: 100%; max-width: 450px; height: 160px;">
+                    <!-- Cinta con ventana -->
+                    <text x="10" y="20" fill="#005500" font-family="monospace" font-size="10">CINTA INFINITA:</text>
+
+                    <!-- Celdas -->
+                    <rect x="20" y="30" width="25" height="25" fill="none" stroke="#002200" stroke-width="1"/>
+                    <text x="32" y="48" fill="#003300" text-anchor="middle" font-family="monospace" font-size="11">...</text>
+
+                    <rect x="45" y="30" width="25" height="25" fill="none" stroke="#003300" stroke-width="1"/>
+                    <text x="57" y="48" fill="#003300" text-anchor="middle" font-family="monospace" font-size="14">□</text>
+
+                    <!-- PREV -->
+                    <rect x="70" y="30" width="25" height="25" fill="#001100" stroke="#00aa00" stroke-width="2"/>
+                    <text x="82" y="48" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">1</text>
+                    <text x="82" y="72" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="9">PREV</text>
+
+                    <!-- CURR (con cabezal) -->
+                    <text x="107" y="22" fill="#33ff33" text-anchor="middle" font-size="16">▼</text>
+                    <rect x="95" y="30" width="25" height="25" fill="#002200" stroke="#33ff33" stroke-width="3"/>
+                    <text x="107" y="48" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="14">0</text>
+                    <text x="107" y="72" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="9">CURR</text>
+
+                    <!-- NEXT -->
+                    <rect x="120" y="30" width="25" height="25" fill="#001100" stroke="#00aa00" stroke-width="2"/>
+                    <text x="132" y="48" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">1</text>
+                    <text x="132" y="72" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="9">NEXT</text>
+
+                    <rect x="145" y="30" width="25" height="25" fill="none" stroke="#003300" stroke-width="1"/>
+                    <text x="157" y="48" fill="#003300" text-anchor="middle" font-family="monospace" font-size="14">□</text>
+
+                    <rect x="170" y="30" width="25" height="25" fill="none" stroke="#002200" stroke-width="1"/>
+                    <text x="182" y="48" fill="#003300" text-anchor="middle" font-family="monospace" font-size="11">...</text>
+
+                    <!-- Flecha a cerebro -->
+                    <path d="M107,80 L107,95 L220,95" stroke="#33ff33" stroke-width="2" fill="none" marker-end="url(#arrG)"/>
+                    <text x="155" y="88" fill="#33ff33" font-family="monospace" font-size="8">PERCIBE</text>
+
+                    <!-- Cerebro del cazador -->
+                    <rect x="230" y="25" width="200" height="130" fill="#0a0f0a" stroke="#33ff33" stroke-width="2" rx="5"/>
+                    <text x="330" y="45" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="11">MEMORIA DEL CAZADOR</text>
+
+                    <!-- Bits de memoria -->
+                    <rect x="245" y="55" width="80" height="35" fill="#001100" stroke="#00aa00" stroke-width="1"/>
+                    <text x="285" y="70" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="9">FASE (2 bits)</text>
+                    <text x="285" y="85" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="11">SEEK|DIV|MUL|BACK</text>
+
+                    <rect x="335" y="55" width="80" height="35" fill="#001100" stroke="#00aa00" stroke-width="1"/>
+                    <text x="375" y="70" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="9">CARRY (2 bits)</text>
+                    <text x="375" y="85" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="11">0 | 1 | 2</text>
+
+                    <!-- Línea de decisión -->
+                    <line x1="245" y1="100" x2="415" y2="100" stroke="#005500" stroke-width="1"/>
+
+                    <!-- Output -->
+                    <text x="285" y="115" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="8">DECIDE</text>
+                    <text x="285" y="130" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="10">WRITE?</text>
+                    <text x="285" y="145" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="14">0|1|□</text>
+
+                    <text x="375" y="115" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="8">DECIDE</text>
+                    <text x="375" y="130" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="10">MOVE?</text>
+                    <text x="375" y="145" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="14">← | →</text>
+                </svg>
+            </div>
+
+            <div style="margin-top: 12px; padding: 12px; border: 2px solid var(--green); background: #001a00;">
+                <div style="color: var(--green); font-size: 14px; text-align: center; margin-bottom: 10px;">
+                    TEOREMA: MEMORIA MÍNIMA DEL CAZADOR
+                </div>
+                <div style="color: var(--green-dim); font-size: 12px; line-height: 1.8; text-align: center;">
+                    El cazador Collatz <b style="color: var(--green);">NO puede operar con 1 solo bit</b> de memoria.<br>
+                    Requiere <b style="color: var(--green);">al menos 3 bits</b> (5 estados efectivos):<br><br>
+                    <code style="color: var(--green);">{ SEEK, DIV, MUL:C=0, MUL:C=1, BACK }</code><br><br>
+                    <span style="color: var(--green-dark);">
+                        Sin embargo, el carry puede llegar a 2 en casos extremos (1+1+1=3→1,C=2)<br>
+                        lo que agrega un 6° estado: <code style="color: var(--green);">MUL:C=2</code>
+                    </span>
+                </div>
+            </div>
+
+            <div style="margin-top: 12px; color: var(--green-dim); font-size: 11px; text-align: center;">
+                <b style="color: var(--green);">INSIGHT PROFUNDO:</b>
+                El cazador es un <b>autómata finito determinista</b> que procesa una cinta infinita.<br>
+                Pero su <b>complejidad no está en él</b> — está en la <b>estructura de los números</b> que recorre.<br>
+                La pregunta Collatz es: ¿toda cinta eventualmente colapsa a "1"?
+            </div>
+        </div>
+
+        <!-- CIRCUIT SPECIFICATION -->
+        <div class="insight" style="margin-top: 12px;">
+            <div class="label">> ESPECIFICACIÓN DE CIRCUITO: CABEZAL COLLATZ</div>
+
+            <div style="margin: 12px 0; text-align: center;">
+                <svg viewBox="0 0 600 320" style="width: 100%; max-width: 600px; height: 320px;">
+                    <!-- Título -->
+                    <text x="300" y="20" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="12">COLLATZ HEAD UNIT — DIGITAL CIRCUIT SPECIFICATION</text>
+
+                    <!-- Caja principal del circuito -->
+                    <rect x="150" y="35" width="300" height="250" fill="#0a0f0a" stroke="#33ff33" stroke-width="2" rx="5"/>
+                    <text x="300" y="55" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="11">COLLATZ FSM</text>
+
+                    <!-- INPUTS (izquierda) -->
+                    <text x="20" y="75" fill="#00aa00" font-family="monospace" font-size="9">INPUTS</text>
+
+                    <!-- PREV input -->
+                    <rect x="30" y="85" width="60" height="25" fill="#001100" stroke="#00aa00" stroke-width="1"/>
+                    <text x="60" y="100" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="9">PREV</text>
+                    <text x="60" y="113" fill="#005500" text-anchor="middle" font-family="monospace" font-size="7">2 bits</text>
+                    <line x1="90" y1="97" x2="150" y2="97" stroke="#00aa00" stroke-width="1.5"/>
+                    <text x="120" y="92" fill="#005500" font-family="monospace" font-size="7">[1:0]</text>
+
+                    <!-- CURR input -->
+                    <rect x="30" y="120" width="60" height="25" fill="#001100" stroke="#33ff33" stroke-width="2"/>
+                    <text x="60" y="135" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="9">CURR</text>
+                    <text x="60" y="148" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="7">2 bits</text>
+                    <line x1="90" y1="132" x2="150" y2="132" stroke="#33ff33" stroke-width="2"/>
+                    <text x="120" y="127" fill="#00aa00" font-family="monospace" font-size="7">[1:0]</text>
+
+                    <!-- NEXT input -->
+                    <rect x="30" y="155" width="60" height="25" fill="#001100" stroke="#00aa00" stroke-width="1"/>
+                    <text x="60" y="170" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="9">NEXT</text>
+                    <text x="60" y="183" fill="#005500" text-anchor="middle" font-family="monospace" font-size="7">2 bits</text>
+                    <line x1="90" y1="167" x2="150" y2="167" stroke="#00aa00" stroke-width="1.5"/>
+                    <text x="120" y="162" fill="#005500" font-family="monospace" font-size="7">[1:0]</text>
+
+                    <!-- CLK input -->
+                    <rect x="30" y="200" width="60" height="20" fill="#001100" stroke="#005500" stroke-width="1"/>
+                    <text x="60" y="214" fill="#005500" text-anchor="middle" font-family="monospace" font-size="9">CLK</text>
+                    <line x1="90" y1="210" x2="150" y2="210" stroke="#005500" stroke-width="1"/>
+
+                    <!-- RST input -->
+                    <rect x="30" y="225" width="60" height="20" fill="#001100" stroke="#005500" stroke-width="1"/>
+                    <text x="60" y="239" fill="#005500" text-anchor="middle" font-family="monospace" font-size="9">RST</text>
+                    <line x1="90" y1="235" x2="150" y2="235" stroke="#005500" stroke-width="1"/>
+
+                    <!-- Bloque interno: STATE REGISTER -->
+                    <rect x="170" y="70" width="120" height="60" fill="#001a00" stroke="#00aa00" stroke-width="1"/>
+                    <text x="230" y="90" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="9">STATE REG</text>
+                    <text x="230" y="105" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="11">3 BITS</text>
+                    <text x="230" y="120" fill="#005500" text-anchor="middle" font-family="monospace" font-size="7">Q[2:0]</text>
+
+                    <!-- Bloque interno: NEXT STATE LOGIC -->
+                    <rect x="170" y="140" width="120" height="50" fill="#0a1a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="230" y="160" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="8">NEXT STATE</text>
+                    <text x="230" y="175" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="8">LOGIC</text>
+
+                    <!-- Bloque interno: OUTPUT LOGIC -->
+                    <rect x="310" y="70" width="120" height="120" fill="#0a1a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="370" y="90" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="8">OUTPUT</text>
+                    <text x="370" y="105" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="8">LOGIC</text>
+                    <text x="370" y="130" fill="#005500" text-anchor="middle" font-family="monospace" font-size="7">COMBINATIONAL</text>
+
+                    <!-- Bloque interno: HALT DETECTOR -->
+                    <rect x="170" y="200" width="260" height="45" fill="#002200" stroke="#33ff33" stroke-width="2"/>
+                    <text x="300" y="218" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="9">HALT DETECTOR</text>
+                    <text x="300" y="235" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="8">(STATE=SEEK) ∧ (PREV=□) ∧ (CURR=1) ∧ (NEXT=□)</text>
+
+                    <!-- OUTPUTS (derecha) -->
+                    <text x="480" y="75" fill="#33ff33" font-family="monospace" font-size="9">OUTPUTS</text>
+
+                    <!-- WRITE output -->
+                    <line x1="450" y1="97" x2="510" y2="97" stroke="#33ff33" stroke-width="2"/>
+                    <rect x="510" y="85" width="70" height="25" fill="#001100" stroke="#33ff33" stroke-width="2"/>
+                    <text x="545" y="100" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="9">WRITE</text>
+                    <text x="545" y="113" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="7">2 bits</text>
+
+                    <!-- MOVE output -->
+                    <line x1="450" y1="132" x2="510" y2="132" stroke="#00aa00" stroke-width="1.5"/>
+                    <rect x="510" y="120" width="70" height="25" fill="#001100" stroke="#00aa00" stroke-width="1"/>
+                    <text x="545" y="135" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="9">MOVE</text>
+                    <text x="545" y="148" fill="#005500" text-anchor="middle" font-family="monospace" font-size="7">2 bits</text>
+
+                    <!-- HALT output -->
+                    <line x1="450" y1="222" x2="510" y2="222" stroke="#33ff33" stroke-width="2"/>
+                    <rect x="510" y="210" width="70" height="25" fill="#002200" stroke="#33ff33" stroke-width="2"/>
+                    <text x="545" y="227" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="9">HALT</text>
+                    <text x="545" y="240" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="7">1 bit</text>
+
+                    <!-- Conexiones internas -->
+                    <path d="M230,130 L230,140" stroke="#00aa00" stroke-width="1" fill="none"/>
+                    <path d="M230,190 L230,200" stroke="#00aa00" stroke-width="1" fill="none"/>
+                    <path d="M290,100 L310,100" stroke="#00aa00" stroke-width="1" fill="none"/>
+                    <path d="M290,165 L310,165" stroke="#00aa00" stroke-width="1" fill="none"/>
+
+                    <!-- Etiquetas de encoding -->
+                    <text x="300" y="300" fill="#005500" text-anchor="middle" font-family="monospace" font-size="8">CELL ENCODING: 00=□ (blank), 01=0, 10=1</text>
+                    <text x="300" y="312" fill="#005500" text-anchor="middle" font-family="monospace" font-size="8">MOVE ENCODING: 00=STAY, 01=LEFT, 10=RIGHT</text>
+                </svg>
+            </div>
+
+            <div class="label" style="margin-top: 16px;">> BITS MÍNIMOS REQUERIDOS</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0;">
+                <div style="padding: 10px; border: 1px solid var(--green-dark);">
+                    <div style="color: var(--green); margin-bottom: 8px;">ENTRADAS (6 bits):</div>
+                    <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                        <tr style="color: var(--green-dim);">
+                            <td style="padding: 3px; border: 1px solid #003300;">PREV[1:0]</td>
+                            <td style="padding: 3px; border: 1px solid #003300;">2 bits</td>
+                            <td style="padding: 3px; border: 1px solid #003300; color: var(--green-dark);">Celda izquierda</td>
+                        </tr>
+                        <tr style="color: var(--green);">
+                            <td style="padding: 3px; border: 1px solid #003300;">CURR[1:0]</td>
+                            <td style="padding: 3px; border: 1px solid #003300;">2 bits</td>
+                            <td style="padding: 3px; border: 1px solid #003300; color: var(--green-dark);">Celda actual</td>
+                        </tr>
+                        <tr style="color: var(--green-dim);">
+                            <td style="padding: 3px; border: 1px solid #003300;">NEXT[1:0]</td>
+                            <td style="padding: 3px; border: 1px solid #003300;">2 bits</td>
+                            <td style="padding: 3px; border: 1px solid #003300; color: var(--green-dark);">Celda derecha</td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="padding: 10px; border: 1px solid var(--green-dark);">
+                    <div style="color: var(--green); margin-bottom: 8px;">MEMORIA INTERNA (3 bits):</div>
+                    <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                        <tr style="color: var(--green);">
+                            <td style="padding: 3px; border: 1px solid #003300;">STATE[2:0]</td>
+                            <td style="padding: 3px; border: 1px solid #003300;">3 bits</td>
+                            <td style="padding: 3px; border: 1px solid #003300; color: var(--green-dark);">7 estados</td>
+                        </tr>
+                    </table>
+                    <div style="margin-top: 8px; font-size: 10px; color: var(--green-dark);">
+                        000=SEEK, 001=DIV, 010=MUL₀<br>
+                        011=MUL₁, 100=MUL₂, 101=BACK<br>
+                        110=HALT
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0;">
+                <div style="padding: 10px; border: 1px solid var(--green-dark);">
+                    <div style="color: var(--green); margin-bottom: 8px;">SALIDAS (5 bits):</div>
+                    <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                        <tr style="color: var(--green);">
+                            <td style="padding: 3px; border: 1px solid #003300;">WRITE[1:0]</td>
+                            <td style="padding: 3px; border: 1px solid #003300;">2 bits</td>
+                            <td style="padding: 3px; border: 1px solid #003300; color: var(--green-dark);">Qué escribir</td>
+                        </tr>
+                        <tr style="color: var(--green-dim);">
+                            <td style="padding: 3px; border: 1px solid #003300;">MOVE[1:0]</td>
+                            <td style="padding: 3px; border: 1px solid #003300;">2 bits</td>
+                            <td style="padding: 3px; border: 1px solid #003300; color: var(--green-dark);">Dirección</td>
+                        </tr>
+                        <tr style="color: var(--green);">
+                            <td style="padding: 3px; border: 1px solid #003300;">HALT</td>
+                            <td style="padding: 3px; border: 1px solid #003300;">1 bit</td>
+                            <td style="padding: 3px; border: 1px solid #003300; color: var(--green-dark);">¡Terminó!</td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="padding: 10px; border: 2px solid var(--green); background: #001a00;">
+                    <div style="color: var(--green); margin-bottom: 8px; text-align: center;">TOTAL FLIP-FLOPS:</div>
+                    <div style="font-size: 28px; color: var(--green); text-align: center; text-shadow: 0 0 10px var(--green-glow);">
+                        3 BITS
+                    </div>
+                    <div style="font-size: 11px; color: var(--green-dim); text-align: center; margin-top: 4px;">
+                        de memoria interna
+                    </div>
+                </div>
+            </div>
+
+            <div class="label" style="margin-top: 16px;">> CONDICIÓN DE HALT: "¡A LA DERECHA NO HAY MÁS!"</div>
+            <div style="margin: 12px 0; padding: 12px; border: 2px solid var(--green); background: #001a00;">
+                <div style="text-align: center; margin-bottom: 12px;">
+                    <svg viewBox="0 0 450 100" style="width: 100%; max-width: 450px; height: 100px;">
+                        <!-- Cinta mostrando condición de halt -->
+                        <text x="30" y="20" fill="#005500" font-family="monospace" font-size="9">EL CAZADOR VE:</text>
+
+                        <rect x="60" y="35" width="30" height="30" fill="none" stroke="#003300" stroke-width="1"/>
+                        <text x="75" y="55" fill="#003300" text-anchor="middle" font-family="monospace" font-size="12">...</text>
+
+                        <rect x="90" y="35" width="35" height="30" fill="#001100" stroke="#33ff33" stroke-width="2"/>
+                        <text x="107" y="55" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="14">□</text>
+                        <text x="107" y="80" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="8">PREV=□</text>
+
+                        <rect x="125" y="35" width="35" height="30" fill="#002200" stroke="#33ff33" stroke-width="3"/>
+                        <text x="142" y="55" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="14">1</text>
+                        <text x="142" y="25" fill="#33ff33" text-anchor="middle" font-size="14">▼</text>
+                        <text x="142" y="80" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="8">CURR=1</text>
+
+                        <rect x="160" y="35" width="35" height="30" fill="#001100" stroke="#33ff33" stroke-width="2"/>
+                        <text x="177" y="55" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="14">□</text>
+                        <text x="177" y="80" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="8">NEXT=□</text>
+
+                        <rect x="195" y="35" width="30" height="30" fill="none" stroke="#003300" stroke-width="1"/>
+                        <text x="210" y="55" fill="#003300" text-anchor="middle" font-family="monospace" font-size="12">...</text>
+
+                        <!-- Flecha a condición -->
+                        <path d="M235,50 L270,50" stroke="#33ff33" stroke-width="2" fill="none" marker-end="url(#arrG)"/>
+                        <text x="252" y="43" fill="#33ff33" font-family="monospace" font-size="8">AND</text>
+
+                        <!-- Estado SEEK -->
+                        <rect x="280" y="25" width="60" height="50" fill="#001100" stroke="#33ff33" stroke-width="2"/>
+                        <text x="310" y="45" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="9">STATE</text>
+                        <text x="310" y="60" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="11">=SEEK</text>
+
+                        <!-- Flecha a HALT -->
+                        <path d="M345,50 L375,50" stroke="#33ff33" stroke-width="2" fill="none" marker-end="url(#arrG)"/>
+
+                        <!-- Caja de HALT -->
+                        <rect x="385" y="30" width="55" height="40" fill="#003300" stroke="#33ff33" stroke-width="3"/>
+                        <text x="412" y="55" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="12">HALT!</text>
+                    </svg>
+                </div>
+                <div style="text-align: center;">
+                    <code style="font-size: 13px; color: var(--green);">
+                        HALT = (STATE == SEEK) ∧ (PREV == □) ∧ (CURR == 1) ∧ (NEXT == □)
+                    </code>
+                </div>
+                <div style="margin-top: 12px; color: var(--green-dim); font-size: 11px; text-align: center;">
+                    <b style="color: var(--green);">INTERPRETACIÓN:</b><br>
+                    "Estoy buscando qué hacer (SEEK), veo un <b>1 solitario</b> rodeado de vacío"<br>
+                    → ¡La cinta contiene exactamente el número 1! → <b>TERMINAMOS</b>
+                </div>
+            </div>
+
+            <div class="label" style="margin-top: 16px;">> ECUACIONES BOOLEANAS (VERILOG-STYLE)</div>
+            <div style="margin: 12px 0; padding: 10px; border: 1px solid var(--green-dark); font-family: monospace; font-size: 11px; overflow-x: auto;">
+                <div style="color: var(--green-dim);">// Encoding: 00=□, 01=0, 10=1</div>
+                <div style="color: var(--green); margin-top: 6px;">
+                    wire is_blank_P = (PREV == 2'b00);<br>
+                    wire is_blank_N = (NEXT == 2'b00);<br>
+                    wire is_zero_C  = (CURR == 2'b01);<br>
+                    wire is_one_C   = (CURR == 2'b10);<br>
+                    wire is_one_P   = (PREV == 2'b10);
+                </div>
+                <div style="color: var(--green-dim); margin: 10px 0 6px;">// ¡LA CONDICIÓN MÁGICA!</div>
+                <div style="color: var(--green); background: #001a00; padding: 6px; border: 1px solid var(--green);">
+                    wire tape_is_one = is_blank_P && is_one_C && is_blank_N;<br>
+                    wire HALT = (STATE == SEEK) && tape_is_one;
+                </div>
+                <div style="color: var(--green-dim); margin: 10px 0 6px;">// Fórmula Wolfram para MUL</div>
+                <div style="color: var(--green);">
+                    wire [2:0] wolfram_sum = CURR + CURR + PREV + CARRY;<br>
+                    wire write_bit = wolfram_sum[0];<br>
+                    wire next_carry = wolfram_sum[1];
+                </div>
+            </div>
+
+            <div class="label" style="margin-top: 16px;">> RESUMEN: COMPLEJIDAD DEL CIRCUITO</div>
+            <div style="margin: 12px 0; padding: 12px; border: 1px solid var(--green); background: #0a0f0a;">
+                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                    <tr style="color: var(--green);">
+                        <td style="padding: 6px; border: 1px solid #003300; width: 50%;">Entradas del mundo</td>
+                        <td style="padding: 6px; border: 1px solid #003300;"><b>6 bits</b> (3 celdas × 2 bits)</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 6px; border: 1px solid #003300;">Memoria interna (flip-flops)</td>
+                        <td style="padding: 6px; border: 1px solid #003300;"><b>3 bits</b> (registro de estado)</td>
+                    </tr>
+                    <tr style="color: var(--green);">
+                        <td style="padding: 6px; border: 1px solid #003300;">Salidas al mundo</td>
+                        <td style="padding: 6px; border: 1px solid #003300;"><b>5 bits</b> (write + move + halt)</td>
+                    </tr>
+                    <tr style="color: var(--green-dim); background: #001100;">
+                        <td style="padding: 6px; border: 1px solid #003300;">Complejidad combinacional</td>
+                        <td style="padding: 6px; border: 1px solid #003300;">~50-100 compuertas lógicas</td>
+                    </tr>
+                </table>
+                <div style="margin-top: 12px; padding: 10px; border: 1px dashed var(--green); text-align: center;">
+                    <span style="color: var(--green); font-size: 14px;">
+                        Un circuito de <b>3 flip-flops</b> y <b>~100 compuertas</b><br>
+                        procesa un problema <b>matemáticamente indecidible</b>
+                    </span>
+                </div>
+            </div>
+
+            <div class="label" style="margin-top: 16px;">> ESQUEMÁTICO DEL CIRCUITO</div>
+            <div style="margin: 12px 0; padding: 10px; background: #1a1a1a; border: 2px solid var(--green); overflow-x: auto;">
+                <svg viewBox="0 0 1000 650" style="width: 100%; min-width: 800px; height: 500px;">
+                    <!-- Título -->
+                    <text x="500" y="25" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="14" font-weight="bold">
+                        COLLATZ HUNTER — DIGITAL CIRCUIT SCHEMATIC
+                    </text>
+
+                    <!-- ===== INPUTS ===== -->
+                    <text x="40" y="60" fill="#33ff33" font-family="monospace" font-size="11">INPUTS</text>
+
+                    <!-- PREV -->
+                    <rect x="30" y="75" width="70" height="40" fill="#0a0a0a" stroke="#00aa00" stroke-width="1.5"/>
+                    <text x="65" y="93" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="10">PREV[1:0]</text>
+                    <text x="65" y="108" text-anchor="middle" fill="#005500" font-family="monospace" font-size="8">2 bits</text>
+                    <line x1="100" y1="95" x2="140" y2="95" stroke="#33ff33" stroke-width="1.5"/>
+
+                    <!-- CURR -->
+                    <rect x="30" y="125" width="70" height="40" fill="#001a00" stroke="#33ff33" stroke-width="2"/>
+                    <text x="65" y="143" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">CURR[1:0]</text>
+                    <text x="65" y="158" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="8">2 bits</text>
+                    <line x1="100" y1="145" x2="140" y2="145" stroke="#33ff33" stroke-width="2"/>
+
+                    <!-- NEXT -->
+                    <rect x="30" y="175" width="70" height="40" fill="#0a0a0a" stroke="#00aa00" stroke-width="1.5"/>
+                    <text x="65" y="193" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="10">NEXT[1:0]</text>
+                    <text x="65" y="208" text-anchor="middle" fill="#005500" font-family="monospace" font-size="8">2 bits</text>
+                    <line x1="100" y1="195" x2="140" y2="195" stroke="#33ff33" stroke-width="1.5"/>
+
+                    <!-- Encoding -->
+                    <rect x="30" y="230" width="70" height="50" fill="none" stroke="#005500" stroke-width="1" stroke-dasharray="3,3"/>
+                    <text x="65" y="248" text-anchor="middle" fill="#005500" font-family="monospace" font-size="8">00=□ 01=0</text>
+                    <text x="65" y="260" text-anchor="middle" fill="#005500" font-family="monospace" font-size="8">10=1</text>
+
+                    <!-- ===== STATE REGISTER ===== -->
+                    <text x="170" y="60" fill="#33ff33" font-family="monospace" font-size="11">STATE REG</text>
+
+                    <rect x="150" y="75" width="90" height="150" fill="#001a00" stroke="#33ff33" stroke-width="2"/>
+                    <text x="195" y="95" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">3-BIT</text>
+                    <text x="195" y="110" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">REGISTER</text>
+
+                    <!-- 3 DFFs -->
+                    <rect x="165" y="120" width="30" height="22" fill="#0a0a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="180" y="135" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="8">DFF2</text>
+
+                    <rect x="165" y="148" width="30" height="22" fill="#0a0a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="180" y="163" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="8">DFF1</text>
+
+                    <rect x="165" y="176" width="30" height="22" fill="#0a0a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="180" y="191" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="8">DFF0</text>
+
+                    <text x="195" y="217" text-anchor="middle" fill="#005500" font-family="monospace" font-size="8">CLK▷</text>
+
+                    <!-- Q output bus -->
+                    <line x1="195" y1="131" x2="215" y2="131" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="195" y1="159" x2="215" y2="159" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="195" y1="187" x2="215" y2="187" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="215" y1="131" x2="215" y2="187" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="215" y1="159" x2="240" y2="159" stroke="#33ff33" stroke-width="3"/>
+                    <text x="225" y="152" fill="#005500" font-family="monospace" font-size="7">Q[2:0]</text>
+
+                    <!-- ===== NEXT STATE LOGIC ===== -->
+                    <text x="300" y="60" fill="#33ff33" font-family="monospace" font-size="11">NEXT STATE LOGIC</text>
+
+                    <rect x="270" y="75" width="140" height="150" fill="#0a0a0a" stroke="#33ff33" stroke-width="2"/>
+                    <text x="340" y="100" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">COMBINATIONAL</text>
+                    <text x="340" y="115" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">LOGIC</text>
+
+                    <!-- Internal formulas -->
+                    <text x="285" y="140" fill="#005500" font-family="monospace" font-size="8">D2=f(Q,P,C,N)</text>
+                    <text x="285" y="155" fill="#005500" font-family="monospace" font-size="8">D1=f(Q,P,C,N)</text>
+                    <text x="285" y="170" fill="#005500" font-family="monospace" font-size="8">D0=f(Q,P,C,N)</text>
+
+                    <!-- Mux symbols -->
+                    <rect x="350" y="130" width="25" height="35" fill="#0a0a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="362" y="152" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="7">MUX</text>
+
+                    <rect x="350" y="170" width="25" height="35" fill="#0a0a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="362" y="192" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="7">MUX</text>
+
+                    <!-- Input wires to next state -->
+                    <line x1="240" y1="159" x2="270" y2="159" stroke="#33ff33" stroke-width="2"/>
+                    <line x1="140" y1="95" x2="145" y2="95" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="145" y1="95" x2="145" y2="130" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="145" y1="130" x2="270" y2="130" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="140" y1="145" x2="155" y2="145" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="155" y1="145" x2="155" y2="180" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="155" y1="180" x2="270" y2="180" stroke="#33ff33" stroke-width="1"/>
+
+                    <!-- D output -->
+                    <line x1="375" y1="150" x2="410" y2="150" stroke="#33ff33" stroke-width="2"/>
+                    <text x="390" y="143" fill="#005500" font-family="monospace" font-size="7">D[2:0]</text>
+
+                    <!-- Feedback loop -->
+                    <path d="M410,150 L410,290 L160,290 L160,159 L165,159" stroke="#ff6666" stroke-width="1.5" fill="none"/>
+                    <text x="285" y="305" text-anchor="middle" fill="#ff6666" font-family="monospace" font-size="8">FEEDBACK (D→Q)</text>
+
+                    <!-- ===== OUTPUT LOGIC ===== -->
+                    <text x="470" y="60" fill="#33ff33" font-family="monospace" font-size="11">OUTPUT LOGIC</text>
+
+                    <rect x="440" y="75" width="120" height="100" fill="#0a0a0a" stroke="#33ff33" stroke-width="2"/>
+                    <text x="500" y="100" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">OUTPUT</text>
+                    <text x="500" y="115" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">DECODER</text>
+
+                    <text x="455" y="140" fill="#005500" font-family="monospace" font-size="8">Q[2:0]→</text>
+                    <text x="455" y="155" fill="#005500" font-family="monospace" font-size="8">C[1:0]→</text>
+
+                    <!-- Wire from state to output -->
+                    <line x1="240" y1="159" x2="250" y2="159" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="250" y1="159" x2="250" y2="50" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="250" y1="50" x2="430" y2="50" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="430" y1="50" x2="430" y2="137" stroke="#33ff33" stroke-width="1"/>
+                    <line x1="430" y1="137" x2="440" y2="137" stroke="#33ff33" stroke-width="2"/>
+
+                    <!-- Output pins -->
+                    <line x1="560" y1="100" x2="610" y2="100" stroke="#33ff33" stroke-width="1.5"/>
+                    <rect x="610" y="90" width="60" height="22" fill="#0a0a0a" stroke="#33ff33" stroke-width="1.5"/>
+                    <text x="640" y="105" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="9">WRITE</text>
+
+                    <line x1="560" y1="130" x2="610" y2="130" stroke="#33ff33" stroke-width="1.5"/>
+                    <rect x="610" y="120" width="60" height="22" fill="#0a0a0a" stroke="#00aa00" stroke-width="1.5"/>
+                    <text x="640" y="135" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="9">MOVE</text>
+
+                    <!-- ===== HALT DETECTOR ===== -->
+                    <text x="470" y="200" fill="#33ff33" font-family="monospace" font-size="11">HALT DETECTOR</text>
+
+                    <rect x="440" y="215" width="230" height="80" fill="#001a00" stroke="#33ff33" stroke-width="2"/>
+                    <text x="555" y="240" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="9">
+                        HALT = (Q=SEEK)∧(P=□)∧(C=1)∧(N=□)
+                    </text>
+
+                    <!-- AND gates -->
+                    <rect x="460" y="252" width="30" height="18" fill="#0a0a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="475" y="264" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="7">Q=0?</text>
+
+                    <rect x="500" y="252" width="30" height="18" fill="#0a0a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="515" y="264" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="7">P=□?</text>
+
+                    <rect x="540" y="252" width="30" height="18" fill="#0a0a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="555" y="264" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="7">C=1?</text>
+
+                    <rect x="580" y="252" width="30" height="18" fill="#0a0a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="595" y="264" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="7">N=□?</text>
+
+                    <!-- AND4 gate -->
+                    <rect x="530" y="275" width="40" height="15" fill="#0a0a0a" stroke="#33ff33" stroke-width="1.5"/>
+                    <text x="550" y="286" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="7">AND4</text>
+
+                    <!-- HALT output -->
+                    <line x1="570" y1="282" x2="620" y2="282" stroke="#33ff33" stroke-width="2"/>
+                    <rect x="620" y="272" width="45" height="22" fill="#002200" stroke="#33ff33" stroke-width="2"/>
+                    <text x="642" y="287" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">HALT</text>
+
+                    <!-- ===== WOLFRAM UNIT ===== -->
+                    <text x="170" y="340" fill="#33ff33" font-family="monospace" font-size="11">WOLFRAM ADDER</text>
+
+                    <rect x="150" y="355" width="250" height="90" fill="#0a0a0a" stroke="#33ff33" stroke-width="2"/>
+                    <text x="275" y="380" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">3n+1 ARITHMETIC UNIT</text>
+
+                    <!-- Adder block -->
+                    <rect x="180" y="395" width="60" height="35" fill="#0a0a0a" stroke="#00aa00" stroke-width="1"/>
+                    <text x="210" y="415" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="9">ADDER</text>
+
+                    <!-- Formula -->
+                    <text x="270" y="400" fill="#005500" font-family="monospace" font-size="8">A = 2·CURR</text>
+                    <text x="270" y="415" fill="#005500" font-family="monospace" font-size="8">B = PREV</text>
+                    <text x="270" y="430" fill="#005500" font-family="monospace" font-size="8">Cin = CARRY</text>
+
+                    <!-- Result -->
+                    <text x="275" y="455" text-anchor="middle" fill="#00aa00" font-family="monospace" font-size="8">WRITE = SUM[0] | CARRY' = SUM[1]</text>
+
+                    <!-- ===== SUMMARY BOX ===== -->
+                    <rect x="440" y="340" width="230" height="120" fill="#0a0a0a" stroke="#33ff33" stroke-width="2"/>
+                    <text x="555" y="365" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="11">SUMMARY</text>
+
+                    <text x="460" y="390" fill="#00aa00" font-family="monospace" font-size="10">Flip-Flops:</text>
+                    <text x="620" y="390" fill="#ffaa00" font-family="monospace" font-size="10">3</text>
+
+                    <text x="460" y="410" fill="#00aa00" font-family="monospace" font-size="10">Input Pins:</text>
+                    <text x="620" y="410" fill="#ffaa00" font-family="monospace" font-size="10">6</text>
+
+                    <text x="460" y="430" fill="#00aa00" font-family="monospace" font-size="10">Output Pins:</text>
+                    <text x="620" y="430" fill="#ffaa00" font-family="monospace" font-size="10">5</text>
+
+                    <text x="460" y="450" fill="#00aa00" font-family="monospace" font-size="10">Logic Gates:</text>
+                    <text x="620" y="450" fill="#ffaa00" font-family="monospace" font-size="10">~80</text>
+
+                    <!-- ===== BOM ===== -->
+                    <rect x="700" y="75" width="130" height="130" fill="#0a0a0a" stroke="#005500" stroke-width="1" stroke-dasharray="3,3"/>
+                    <text x="765" y="95" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">BOM (74HC)</text>
+                    <text x="715" y="115" fill="#005500" font-family="monospace" font-size="8">1× 74HC174 DFF</text>
+                    <text x="715" y="130" fill="#005500" font-family="monospace" font-size="8">2× 74HC151 MUX</text>
+                    <text x="715" y="145" fill="#005500" font-family="monospace" font-size="8">1× 74HC283 ADD</text>
+                    <text x="715" y="160" fill="#005500" font-family="monospace" font-size="8">2× 74HC00 NAND</text>
+                    <text x="715" y="175" fill="#005500" font-family="monospace" font-size="8">1× 74HC08 AND</text>
+                    <text x="715" y="190" fill="#005500" font-family="monospace" font-size="8">1× 74HC32 OR</text>
+
+                    <!-- ===== LEGEND ===== -->
+                    <rect x="700" y="215" width="130" height="80" fill="#0a0a0a" stroke="#005500" stroke-width="1" stroke-dasharray="3,3"/>
+                    <text x="765" y="235" text-anchor="middle" fill="#33ff33" font-family="monospace" font-size="10">LEGEND</text>
+                    <line x1="715" y1="250" x2="745" y2="250" stroke="#33ff33" stroke-width="1.5"/>
+                    <text x="750" y="253" fill="#005500" font-family="monospace" font-size="8">Signal</text>
+                    <line x1="715" y1="265" x2="745" y2="265" stroke="#33ff33" stroke-width="3"/>
+                    <text x="750" y="268" fill="#005500" font-family="monospace" font-size="8">Bus</text>
+                    <line x1="715" y1="280" x2="745" y2="280" stroke="#ff6666" stroke-width="1.5"/>
+                    <text x="750" y="283" fill="#005500" font-family="monospace" font-size="8">Feedback</text>
+
+                    <!-- Footer -->
+                    <text x="500" y="490" text-anchor="middle" fill="#005500" font-family="monospace" font-size="9">
+                        COLLATZ TURING MACHINE — 3 BITS STATE — INFINITE BINARY TAPE
+                    </text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- WARSHALL ANALYSIS -->
+        <div class="insight" style="margin-top: 12px;">
+            <div class="label">> WARSHALL TRANSITIVE CLOSURE R* (MOD 8)</div>
+            <div style="margin: 10px 0; display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="color: var(--green-dim); margin-bottom: 6px;">TRANSITION GRAPH:</div>
+                    <svg viewBox="0 0 200 200" style="width: 100%; max-width: 200px; height: 200px;">
+                        <!-- Nodos -->
+                        <circle cx="100" cy="30" r="15" fill="none" stroke="#33ff33" stroke-width="2"/>
+                        <text x="100" y="35" fill="#33ff33" text-anchor="middle" font-family="monospace" font-size="14">1</text>
+
+                        <circle cx="160" cy="70" r="15" fill="none" stroke="#00aa00" stroke-width="1"/>
+                        <text x="160" y="75" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">2</text>
+
+                        <circle cx="160" cy="130" r="15" fill="none" stroke="#00aa00" stroke-width="1"/>
+                        <text x="160" y="135" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">3</text>
+
+                        <circle cx="100" cy="170" r="15" fill="none" stroke="#00aa00" stroke-width="1"/>
+                        <text x="100" y="175" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">4</text>
+
+                        <circle cx="40" cy="130" r="15" fill="none" stroke="#00aa00" stroke-width="1"/>
+                        <text x="40" y="135" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">5</text>
+
+                        <circle cx="40" cy="70" r="15" fill="none" stroke="#00aa00" stroke-width="1"/>
+                        <text x="40" y="75" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">6</text>
+
+                        <circle cx="100" cy="100" r="15" fill="none" stroke="#00aa00" stroke-width="1"/>
+                        <text x="100" y="105" fill="#00aa00" text-anchor="middle" font-family="monospace" font-size="14">7</text>
+
+                        <!-- Aristas -->
+                        <defs>
+                            <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#00aa00"/>
+                            </marker>
+                        </defs>
+
+                        <!-- 1 -> 4 -->
+                        <path d="M100,45 L100,153" stroke="#00aa00" stroke-width="1" fill="none" marker-end="url(#arrow)"/>
+                        <!-- 2 -> 1 -->
+                        <path d="M148,58 L112,42" stroke="#00aa00" stroke-width="1" fill="none" marker-end="url(#arrow)"/>
+                        <!-- 3 -> 2 -->
+                        <path d="M160,115 L160,88" stroke="#00aa00" stroke-width="1" fill="none" marker-end="url(#arrow)"/>
+                        <!-- 4 -> 2 -->
+                        <path d="M113,158 L148,82" stroke="#00aa00" stroke-width="1" fill="none" marker-end="url(#arrow)"/>
+                        <!-- 5 -> 0 (loop to represent escape) -->
+                        <path d="M28,120 Q10,100 28,80" stroke="#005500" stroke-width="1" fill="none" stroke-dasharray="3,3"/>
+                        <!-- 6 -> 3 -->
+                        <path d="M55,78 L145,122" stroke="#00aa00" stroke-width="1" fill="none" marker-end="url(#arrow)"/>
+                        <!-- 7 -> 6 -->
+                        <path d="M86,92 L54,78" stroke="#00aa00" stroke-width="1" fill="none" marker-end="url(#arrow)"/>
+                    </svg>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="color: var(--green-dim); margin-bottom: 6px;">REACHABILITY MATRIX R*:</div>
+                    <pre style="font-size: 11px; line-height: 1.3; color: var(--green);">
+    1 2 3 4 5 6 7
+  ┌───────────────┐
+1 │ 1 1 0 1 0 0 0 │
+2 │ 1 1 0 1 0 0 0 │
+3 │ 1 1 1 1 0 0 0 │
+4 │ 1 1 0 1 0 0 0 │
+5 │ 0 0 0 0 1 0 0 │ ← NO ALCANZA 1
+6 │ 1 1 1 1 0 1 0 │
+7 │ 1 1 1 1 0 1 1 │
+  └───────────────┘</pre>
+                    <div style="color: var(--green-dark); font-size: 12px; margin-top: 6px;">
+                        R*[i,j] = 1 IFF i →* j
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--green-dark);">
+                <div style="color: var(--green-dim);">OBSERVATION:</div>
+                <div style="color: var(--green-dark); font-size: 13px;">
+                    MOD 8: NODE 5 ≡ {5,13,21,29,...} ESCAPES TO HIGHER VALUES BEFORE RETURNING.<br>
+                    THIS IS WHY 27 (≡ 3 MOD 8) REACHES 9232 BEFORE COLLAPSING.<br>
+                    THE GRAPH SHOWS LOCAL STRUCTURE, NOT GLOBAL CONVERGENCE.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== STATE =====
+        let tape = [];
+        let head = 0;
+        let state = "LEER";
+        let stepNum = 0;
+        let collatzSteps = 0;
+        let snapshots = [];
+        let running = false;
+        let timerId = null;
+
+        const stLabels = {
+            LEER: "LEER", DIV2: "DIV2", ADD_A: "ADD:0", ADD_B: "ADD:1",
+            ADD_C: "ADD:2", REWCARRY: "CARRY", REWIND: "REWIND", HALT: "HALT"
+        };
+
+        const transTableData = [
+            ["LEER", "0", "DIV2", "-", "-", "EVEN->DIVIDE"],
+            ["LEER", "1", "ADD:1", "-", "-", "ODD->3n+1"],
+            ["LEER", "□", "HALT", "-", "-", "END"],
+            ["DIV2", "0", "DIV2", "□", "R", "EAT ZERO"],
+            ["DIV2", "1", "LEER", "1", "-", "STOP,READ"],
+            ["DIV2", "□", "HALT", "-", "-", "ALL ZEROS"],
+            ["ADD:0", "0", "ADD:0", "0", "R", "0+0+0=0"],
+            ["ADD:0", "1", "ADD:1", "1", "R", "1+0+0=1"],
+            ["ADD:0", "□", "REWIND", "-", "L", "END NUM"],
+            ["ADD:1", "0", "ADD:0", "1", "R", "0+0+1=1"],
+            ["ADD:1", "1", "ADD:2", "0", "R", "1+1+1=0,C=2"],
+            ["ADD:1", "□", "REWIND", "1", "L", "EMIT EXTRA"],
+            ["ADD:2", "0", "ADD:1", "0", "R", "0+0+2=0,C=1"],
+            ["ADD:2", "1", "ADD:2", "1", "R", "1+1+2=1,C=2"],
+            ["ADD:2", "□", "CARRY", "0,1", "L", "FINAL CARRY"],
+            ["REWIND", "*", "REWIND", "-", "L", "SEEK START"],
+            ["REWIND", "□", "LEER", "-", "R", "FOUND START"],
+        ];
+
+        function delta(st, sym) {
+            const s = sym === null || sym === undefined ? "B" : String(sym);
+
+            switch(st) {
+                case "LEER":
+                    if (s === "0") return { next: "DIV2", write: null, move: null };
+                    if (s === "1") return { next: "ADD_B", write: null, move: null };
+                    return { next: "HALT", write: null, move: null };
+                case "DIV2":
+                    if (s === "0") return { next: "DIV2", write: "B", move: "R" };
+                    if (s === "1") return { next: "LEER", write: "1", move: null };
+                    return { next: "HALT", write: null, move: null };
+                case "ADD_A":
+                    if (s === "B") return { next: "REWIND", write: null, move: "L" };
+                    if (s === "0") return { next: "ADD_A", write: "0", move: "R" };
+                    return { next: "ADD_B", write: "1", move: "R" };
+                case "ADD_B":
+                    if (s === "B") return { next: "REWIND", write: "1", move: "L" };
+                    if (s === "0") return { next: "ADD_A", write: "1", move: "R" };
+                    return { next: "ADD_C", write: "0", move: "R" };
+                case "ADD_C":
+                    if (s === "B") return { next: "REWCARRY", write: "0", move: "R" };
+                    if (s === "0") return { next: "ADD_B", write: "0", move: "R" };
+                    return { next: "ADD_C", write: "1", move: "R" };
+                case "REWCARRY":
+                    return { next: "REWIND", write: "1", move: "L" };
+                case "REWIND":
+                    if (s === "B") return { next: "LEER", write: null, move: "R" };
+                    return { next: "REWIND", write: null, move: "L" };
+                case "HALT":
+                    return null;
+                default:
+                    return null;
+            }
+        }
+
+        function toBitsLSB(n) {
+            if (n === 0) return [0];
+            const b = [];
+            while (n > 0) { b.push(n & 1); n >>= 1; }
+            return b;
+        }
+
+        function tapeToNumber(t, h) {
+            let left = t.length, right = -1;
+            for (let i = 0; i < t.length; i++) {
+                if (t[i] !== "B" && t[i] !== null) {
+                    left = Math.min(left, i);
+                    right = Math.max(right, i);
+                }
+            }
+            if (right < left) return 0;
+            let n = 0;
+            for (let i = right; i >= left; i--) {
+                n = n * 2 + (t[i] === "1" || t[i] === 1 ? 1 : 0);
+            }
+            return n;
+        }
+
+        function initTape(n, padding = 12) {
+            const bits = toBitsLSB(n);
+            const t = [];
+            for (let i = 0; i < padding; i++) t.push("B");
+            for (const b of bits) t.push(String(b));
+            for (let i = 0; i < padding + 4; i++) t.push("B");
+            return { tape: t, head: padding };
+        }
+
+        function init() {
+            stopRun();
+            const v = parseInt(document.getElementById("inputN").value) || 1;
+            const result = initTape(v, 12);
+            tape = result.tape;
+            head = result.head;
+            state = "LEER";
+            stepNum = 0;
+            collatzSteps = 0;
+            snapshots = [{ n: v, bits: toBitsLSB(v).join(""), len: toBitsLSB(v).length, op: "START" }];
+            render();
+        }
+
+        function doMicroStep() {
+            if (state === "HALT") return;
+            const sym = head >= 0 && head < tape.length ? tape[head] : "B";
+            const result = delta(state, sym);
+            if (!result) return;
+            const prevState = state;
+            if (result.write !== null) {
+                while (head >= tape.length) tape.push("B");
+                tape[head] = result.write;
+            }
+            if (result.move === "R") head++;
+            else if (result.move === "L") head--;
+            while (head >= tape.length) tape.push("B");
+            while (head < 0) { tape.unshift("B"); head = 0; }
+            state = result.next;
+            stepNum++;
+            if (result.next === "LEER" && prevState !== "LEER") {
+                collatzSteps++;
+                const newVal = tapeToNumber(tape, head);
+                snapshots.push({ n: newVal, bits: toBitsLSB(Math.max(1, newVal)).join(""), len: toBitsLSB(Math.max(1, newVal)).length, op: "->" });
+            }
+            if (state === "HALT") {
+                const newVal = tapeToNumber(tape, head);
+                snapshots.push({ n: newVal, bits: "1", len: 1, op: "HALT" });
+                stopRun();
+            }
+            render();
+        }
+
+        function doCollatzStep() {
+            if (state === "HALT") return;
+            let count = 0;
+            const maxIter = 5000;
+            do {
+                const sym = head >= 0 && head < tape.length ? tape[head] : "B";
+                const r = delta(state, sym);
+                if (!r) break;
+                if (r.write !== null) { while (head >= tape.length) tape.push("B"); tape[head] = r.write; }
+                if (r.move === "R") head++;
+                else if (r.move === "L") head--;
+                while (head >= tape.length) tape.push("B");
+                while (head < 0) { tape.unshift("B"); head = 0; }
+                state = r.next;
+                count++;
+                if (state === "HALT" || state === "LEER") break;
+            } while (count < maxIter);
+            stepNum += count;
+            collatzSteps++;
+            const newVal = tapeToNumber(tape, head);
+            snapshots.push({ n: newVal, bits: toBitsLSB(Math.max(1, newVal)).join(""), len: toBitsLSB(Math.max(1, newVal)).length, op: state === "HALT" ? "HALT" : "->" });
+            if (state === "HALT") stopRun();
+            render();
+        }
+
+        function doStep() {
+            const micro = document.getElementById("microMode").checked;
+            if (micro) doMicroStep(); else doCollatzStep();
+        }
+
+        function toggleRun() {
+            if (running) { stopRun(); }
+            else {
+                running = true;
+                document.getElementById("btnRun").textContent = "STOP";
+                document.getElementById("btnRun").classList.add("active");
+                const micro = document.getElementById("microMode").checked;
+                const speed = 310 - parseInt(document.getElementById("speedSlider").value);
+                timerId = setInterval(() => {
+                    if (!running || state === "HALT") { stopRun(); return; }
+                    if (micro) doMicroStep(); else doCollatzStep();
+                }, micro ? speed : speed * 3);
+            }
+        }
+
+        function stopRun() {
+            running = false;
+            if (timerId) clearInterval(timerId);
+            timerId = null;
+            document.getElementById("btnRun").textContent = "RUN";
+            document.getElementById("btnRun").classList.remove("active");
+        }
+
+        function runToEnd() {
+            stopRun();
+            let count = 0, cSteps = 0;
+            const maxIter = 100000;
+            while (state !== "HALT" && count < maxIter) {
+                const sym = head >= 0 && head < tape.length ? tape[head] : "B";
+                const r = delta(state, sym);
+                if (!r) break;
+                if (r.write !== null) { while (head >= tape.length) tape.push("B"); tape[head] = r.write; }
+                if (r.move === "R") head++;
+                else if (r.move === "L") head--;
+                while (head >= tape.length) tape.push("B");
+                while (head < 0) { tape.unshift("B"); head = 0; }
+                const prevS = state;
+                state = r.next;
+                count++;
+                if ((state === "LEER" && prevS !== "LEER") || state === "HALT") {
+                    cSteps++;
+                    const v = tapeToNumber(tape, head);
+                    snapshots.push({ n: v, bits: toBitsLSB(Math.max(1,v)).join(""), len: toBitsLSB(Math.max(1,v)).length, op: state === "HALT" ? "HALT" : "->" });
+                }
+            }
+            stepNum += count;
+            collatzSteps += cSteps;
+            render();
+        }
+
+        function updateStepBtn() {
+            const micro = document.getElementById("microMode").checked;
+            document.getElementById("btnStep").textContent = micro ? "μSTEP" : "STEP";
+        }
+
+        function render() {
+            const currentVal = tapeToNumber(tape, head);
+            const currentBits = toBitsLSB(Math.max(1, currentVal)).length;
+
+            document.getElementById("statVal").textContent = currentVal;
+            document.getElementById("statBits").textContent = currentBits;
+            document.getElementById("statUsteps").textContent = stepNum;
+            document.getElementById("statCsteps").textContent = collatzSteps;
+
+            const badge = document.getElementById("statState");
+            badge.textContent = stLabels[state] || state;
+            badge.className = "state-badge" + (state === "HALT" ? " halt" : "");
+
+            renderTape();
+            renderHeadUnit();
+            renderTransTable();
+            renderTrajectory();
+
+            const isHalt = state === "HALT";
+            document.getElementById("btnStep").disabled = isHalt;
+            document.getElementById("btnEnd").disabled = isHalt;
+        }
+
+        function renderHeadUnit() {
+            // Get PREV, CURR, NEXT values
+            const prev = head > 0 ? (tape[head - 1] || "B") : "B";
+            const curr = tape[head] || "B";
+            const next = head < tape.length - 1 ? (tape[head + 1] || "B") : "B";
+
+            // Convert to display values
+            const toDisplay = (v) => v === "B" ? "□" : v;
+            const toBits = (v) => v === "B" ? "00" : (v === "0" ? "01" : "10");
+
+            // Update input cells
+            document.getElementById("headPrev").textContent = toDisplay(prev);
+            document.getElementById("headPrevBits").textContent = toBits(prev);
+            document.getElementById("headCurr").textContent = toDisplay(curr);
+            document.getElementById("headCurrBits").textContent = toBits(curr);
+            document.getElementById("headNext").textContent = toDisplay(next);
+            document.getElementById("headNextBits").textContent = toBits(next);
+
+            // Map internal state to display state
+            const stateMap = {
+                "LEER": { name: "SEEK", bits: "000", carry: "-" },
+                "DIV2": { name: "DIV", bits: "001", carry: "-" },
+                "ADD_A": { name: "MUL₀", bits: "010", carry: "0" },
+                "ADD_B": { name: "MUL₁", bits: "011", carry: "1" },
+                "ADD_C": { name: "MUL₂", bits: "100", carry: "2" },
+                "REWCARRY": { name: "MUL₂", bits: "100", carry: "2" },
+                "REWIND": { name: "BACK", bits: "101", carry: "-" },
+                "HALT": { name: "HALT", bits: "110", carry: "-" }
+            };
+
+            const st = stateMap[state] || { name: state, bits: "???", carry: "-" };
+            document.getElementById("headState").textContent = st.name;
+            document.getElementById("headStateBits").textContent = st.bits;
+            document.getElementById("headCarry").textContent = st.carry;
+
+            // Update carry box styling
+            const carryBox = document.getElementById("carryBox");
+            carryBox.classList.toggle("active", st.carry !== "-");
+
+            // Calculate what will happen next (outputs)
+            const result = delta(state, curr);
+            if (result) {
+                const writeVal = result.write === null ? "-" : (result.write === "B" ? "□" : result.write);
+                const moveVal = result.move === null ? "-" : (result.move === "L" ? "←" : (result.move === "R" ? "→" : "-"));
+                document.getElementById("headWrite").textContent = writeVal;
+                document.getElementById("headMove").textContent = moveVal;
+            } else {
+                document.getElementById("headWrite").textContent = "-";
+                document.getElementById("headMove").textContent = "-";
+            }
+
+            // Halt detection logic
+            const isSeek = state === "LEER";
+            const isPrevBlank = prev === "B";
+            const isCurrOne = curr === "1";
+            const isNextBlank = next === "B";
+            const willHalt = isSeek && isPrevBlank && isCurrOne && isNextBlank;
+
+            // Update halt detector visualization
+            document.getElementById("haltCheck1").textContent = isSeek ? "✓" : "□";
+            document.getElementById("haltCheck1").classList.toggle("checked", isSeek);
+            document.getElementById("haltCheck2").textContent = isPrevBlank ? "✓" : "□";
+            document.getElementById("haltCheck2").classList.toggle("checked", isPrevBlank);
+            document.getElementById("haltCheck3").textContent = isCurrOne ? "✓" : "□";
+            document.getElementById("haltCheck3").classList.toggle("checked", isCurrOne);
+            document.getElementById("haltCheck4").textContent = isNextBlank ? "✓" : "□";
+            document.getElementById("haltCheck4").classList.toggle("checked", isNextBlank);
+
+            document.getElementById("haltResult").textContent = willHalt ? "1" : "0";
+            document.getElementById("haltResult").classList.toggle("active", willHalt);
+            document.getElementById("headHalt").textContent = state === "HALT" ? "1" : "0";
+
+            // Update halt row styling
+            const haltRow = document.getElementById("haltRow");
+            haltRow.classList.toggle("active", state === "HALT");
+
+            // Update head unit styling
+            const headUnit = document.getElementById("headUnit");
+            headUnit.classList.toggle("halted", state === "HALT");
+        }
+
+        function renderTape() {
+            const viewWidth = 21;
+            const start = Math.max(0, head - Math.floor(viewWidth / 2));
+            const end = Math.min(tape.length, start + viewWidth);
+            let html = '<span class="tape-ellipsis">...□</span>';
+            for (let i = start; i < end; i++) {
+                const isHead = i === head;
+                const val = tape[i] || "B";
+                const isBlank = val === "B";
+                let cellClass = "cell-box ";
+                if (isBlank) cellClass += "cell-blank";
+                else if (val === "1") cellClass += "cell-1";
+                else cellClass += "cell-0";
+                if (isHead) cellClass += " cell-head";
+                html += `<div class="tape-cell">`;
+                if (isHead) html += `<div class="head-indicator">▼${stLabels[state] || state}</div>`;
+                html += `<div class="${cellClass}">${isBlank ? "□" : val}</div>`;
+                html += `<span class="cell-index">${i}</span></div>`;
+            }
+            html += '<span class="tape-ellipsis">□...</span>';
+            document.getElementById("tapeWrapper").innerHTML = html;
+        }
+
+        function renderTransTable() {
+            let html = `<thead><tr><th>STATE</th><th>READ</th><th>NEXT</th><th>WRITE</th><th>MOVE</th><th>DESC</th></tr></thead><tbody>`;
+            for (const row of transTableData) {
+                const stKey = row[0].replace(/:(\d)/, (m, d) => "_" + "ABC"[d]);
+                const isActive = state === stKey || state.startsWith(row[0].split(":")[0]);
+                html += `<tr class="${isActive ? 'active' : ''}">`;
+                html += `<td class="st">${row[0]}</td><td>${row[1]}</td><td class="st">${row[2]}</td>`;
+                html += `<td class="wr">${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td></tr>`;
+            }
+            html += `</tbody>`;
+            document.getElementById("transTable").innerHTML = html;
+        }
+
+        function renderTrajectory() {
+            let html = "";
+            for (let i = 0; i < snapshots.length; i++) {
+                const s = snapshots[i];
+                const prevLen = i > 0 ? snapshots[i - 1].len : s.len;
+                const diff = s.len - prevLen;
+                const bits = s.bits.length > 16 ? s.bits.slice(0, 16) + "~" : s.bits;
+                let diffClass = "traj-diff ", diffText = "";
+                if (i > 0) {
+                    if (diff < 0) { diffClass += "neg"; diffText = diff; }
+                    else if (diff > 0) { diffClass += "pos"; diffText = "+" + diff; }
+                    else { diffClass += "zero"; diffText = "="; }
+                }
+                html += `<div class="traj-row">`;
+                html += `<span class="traj-idx">${i}</span>`;
+                html += `<span class="traj-n ${s.n === 1 ? 'halt' : ''}">${s.n}</span>`;
+                html += `<span class="traj-bits">${bits}</span>`;
+                html += `<span class="traj-len">[${s.len}]</span>`;
+                html += `<span class="${diffClass}">${diffText}</span>`;
+                html += `<span class="traj-op">${s.op}</span></div>`;
+            }
+            document.getElementById("trajList").innerHTML = html;
+            if (snapshots.length > 2) {
+                document.getElementById("chartContainer").style.display = "block";
+                const lens = snapshots.map(s => s.len);
+                const maxL = Math.max(...lens, 1);
+                const pts = lens.map((l, i) => `${(i / Math.max(lens.length - 1, 1)) * 296 + 2},${56 - (l / maxL) * 50}`).join(" ");
+                document.getElementById("chartSvg").innerHTML = `<polyline points="${pts}" fill="none" stroke="#33ff33" stroke-width="1.5" opacity="0.8"/><line x1="0" y1="56" x2="300" y2="56" stroke="#005500" stroke-width="0.5"/>`;
+            } else {
+                document.getElementById("chartContainer").style.display = "none";
+            }
+        }
+
+        window.onload = function() {
+            init();
+            setTimeout(() => { document.getElementById("boot").style.display = "none"; }, 2000);
+        };
+    </script>
+</body>
+</html>
