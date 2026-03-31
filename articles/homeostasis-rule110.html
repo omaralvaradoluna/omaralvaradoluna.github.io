@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Imposibilidad de la Homeostasis en Sistemas Turing-Completos | Omar Alvarado</title>
+    <title>Homeostasis en Sistemas Clase IV | Omar Alvarado</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -15,7 +15,6 @@
             text-align: center;
             position: relative;
         }
-
         .article-hero::after {
             content: '';
             position: absolute;
@@ -26,7 +25,6 @@
             height: 2px;
             background: var(--gradient-gold);
         }
-
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -36,27 +34,23 @@
             margin-bottom: 40px;
             transition: color 0.3s ease;
         }
-
         .back-link:hover { color: var(--gold); }
-
         .article-tags {
             display: flex;
             justify-content: center;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
-
         .article-hero h1 {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto 20px;
         }
-
         .article-subtitle {
             font-size: 1.3rem;
             color: var(--gold-dim);
             font-style: italic;
         }
-
         .article-info {
             display: flex;
             justify-content: center;
@@ -65,23 +59,53 @@
             font-size: 14px;
             color: var(--text-muted);
         }
-
-        /* Image grid for comparisons */
         .image-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             margin: var(--spacing-lg) 0;
         }
-
-        .image-grid figure {
-            margin: 0;
+        .image-grid figure { margin: 0; }
+        .image-grid img { width: 100%; }
+        .theorem-box {
+            background: rgba(212, 168, 83, 0.08);
+            border: 1px solid var(--border-gold);
+            border-left: 4px solid var(--gold);
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
         }
-
-        .image-grid img {
+        .theorem-box .theorem-title {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 15px;
+        }
+        .definition-box {
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: var(--radius-md);
+        }
+        .definition-box .def-title {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        .hierarchy-table {
             width: 100%;
+            margin: 25px 0;
         }
-
+        .hierarchy-table th {
+            background: rgba(212, 168, 83, 0.15);
+            color: var(--gold);
+        }
         @media (max-width: 700px) {
             .image-grid { grid-template-columns: 1fr; }
             .article-hero { padding: 120px 20px 60px; }
@@ -96,239 +120,287 @@
 <nav>
     <a href="../index.html" class="nav-logo"><span>א</span> OMAR ALVARADO</a>
     <ul class="nav-links">
-        <li><a href="../index.html#articles">Artículos</a></li>
-        <li><a href="../index.html#research">Investigación</a></li>
-        <li><a href="../cv.html">CV</a></li>
-        <li><a href="https://github.com/omaralvaradoluna" target="_blank">GitHub</a></li>
+        <a href="../index.html#articles">Artículos</a>
+        <a href="../index.html#research">Investigación</a>
+        <a href="../cv.html">CV</a>
+        <a href="https://github.com/omaralvaradoluna" target="_blank">GitHub</a>
     </ul>
 </nav>
 
 <header class="article-hero">
     <a href="../index.html" class="back-link">← Volver al Inicio</a>
     <div class="article-tags">
+        <span class="tag">Teoría de Autómatas</span>
+        <span class="tag">Jerarquía de Chomsky</span>
         <span class="tag">Cibernética</span>
-        <span class="tag">Autómatas Celulares</span>
-        <span class="tag gold">Teoría de la Complejidad</span>
+        <span class="tag gold">Clase IV</span>
     </div>
-    <h1>La Imposibilidad de la Homeostasis en Sistemas Turing-Completos</h1>
-    <p class="article-subtitle">Una Perspectiva Cibernética sobre la Regla 110</p>
+    <h1>Homeostasis en Sistemas Clase IV</h1>
+    <p class="article-subtitle">La Incomputabilidad Estructural entre Niveles de la Jerarquía de Chomsky</p>
     <div class="article-info">
-        <span>30 de Marzo, 2026</span>
+        <span>Marzo 2026</span>
         <span>•</span>
-        <span>12 min lectura</span>
+        <span>15 min</span>
     </div>
 </header>
 
 <article class="article-content">
 
-    <h2>Introducción: El sueño cibernético del equilibrio</h2>
+    <h2>§1. El Problema: FSA vs. Máquina Universal</h2>
 
-    <p>En 1948, Norbert Wiener publicó <em>"Cybernetics: Or Control and Communication in the Animal and the Machine"</em>, estableciendo las bases de una ciencia que prometía unificar la comprensión de sistemas biológicos, mecánicos y sociales bajo un mismo paradigma: <strong>el control mediante retroalimentación</strong>.</p>
+    <p>Sea <strong>R</strong> un nodo regulador modelado como un <em>Autómata de Estados Finitos</em> (FSA) —Nivel 3 de la Jerarquía de Chomsky— intentando mantener homeostasis sobre un entorno <strong>E</strong> que evoluciona bajo la Regla 110 de Wolfram, demostrada <em>Turing-Completa</em> —Nivel 0.</p>
 
-    <p>La promesa era elegante: todo sistema que pudiera medir su desviación de un estado deseado y corregirse a sí mismo alcanzaría la <strong>homeostasis</strong> — ese equilibrio dinámico que mantiene vivo a un organismo, estable a una economía, o funcional a una máquina.</p>
-
-    <p>Pero, ¿qué sucede cuando un sistema es <em>demasiado</em> capaz? ¿Cuando su potencial computacional excede cualquier mecanismo de regulación que intentemos imponerle?</p>
-
-    <p>La <strong>Regla 110</strong> de los autómatas celulares nos ofrece una respuesta inquietante.</p>
-
-    <figure>
-        <img src="../images/portada.png" alt="Falla de Homeostasis en la Regla 110">
-        <figcaption>Regla 110: Evolución temporal mostrando la falla de homeostasis</figcaption>
-    </figure>
-
-    <hr>
-
-    <h2>La Ley de la Variedad Requerida</h2>
-
-    <p>W. Ross Ashby, en su obra <em>"An Introduction to Cybernetics"</em> (1956), formalizó lo que hoy conocemos como la <strong>Ley de la Variedad Requerida</strong>:</p>
-
-    <blockquote>
-        "Solo la variedad puede absorber variedad."
-    </blockquote>
-
-    <figure>
-        <img src="../images/ashby_diagram.png" alt="Diagrama de la Ley de Ashby">
-        <figcaption>Ley de Variedad Requerida de Ashby: El regulador debe tener al menos tanta variedad como las perturbaciones</figcaption>
-    </figure>
-
-    <p>En términos formales:</p>
-
-    <div class="equation-block">
-        <span id="eq1"></span>
+    <div class="definition-box">
+        <div class="def-title">Definición 1.1 — Jerarquía de Chomsky</div>
+        <table class="hierarchy-table">
+            <thead>
+                <tr>
+                    <th>Nivel</th>
+                    <th>Gramática</th>
+                    <th>Autómata</th>
+                    <th>Lenguaje</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>0</strong></td>
+                    <td>Sin restricciones</td>
+                    <td>Máquina de Turing</td>
+                    <td>Recursivamente enumerable</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Sensible al contexto</td>
+                    <td>Autómata acotado linealmente</td>
+                    <td>Sensible al contexto</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Libre de contexto</td>
+                    <td>Autómata de pila</td>
+                    <td>Libre de contexto</td>
+                </tr>
+                <tr>
+                    <td><strong>3</strong></td>
+                    <td>Regular</td>
+                    <td>FSA (Estados Finitos)</td>
+                    <td>Regular</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
-    <p>Esto significa que para que un sistema mantenga homeostasis, su mecanismo regulador debe tener <strong>al menos tantos estados posibles</strong> como las perturbaciones que intenta controlar.</p>
+    <p>La función de transferencia del regulador <strong>R</strong>:</p>
 
-    <p>Un termostato funciona porque las perturbaciones térmicas de una habitación tienen variedad limitada (temperatura sube o baja), y el regulador (encender/apagar calefacción) puede manejarlas.</p>
+    <div class="equation-block">
+        <span id="eq-fsa"></span>
+    </div>
 
-    <p>Pero, ¿qué ocurre cuando las perturbaciones tienen <strong>variedad infinita</strong>?</p>
+    <p>donde <span id="eq-Q"></span> es finito. Contrastando con la función de transición de la Regla 110:</p>
 
-    <hr>
+    <div class="equation-block">
+        <span id="eq-r110"></span>
+    </div>
 
-    <h2>La Regla 110: Computación Universal en Una Dimensión</h2>
+    <p>donde Γ es potencialmente infinito y δ implementa computación universal.</p>
 
-    <p>Stephen Wolfram clasificó los autómatas celulares elementales en cuatro clases. La <strong>Clase IV</strong> —donde habita la Regla 110— exhibe comportamiento "al borde del caos": ni completamente ordenado, ni completamente aleatorio.</p>
+    <div class="theorem-box">
+        <div class="theorem-title">Teorema 1.1 — Incomputabilidad Jerárquica</div>
+        <p>Sea <em>L</em><sub>E</sub> el lenguaje generado por las trayectorias del entorno <strong>E</strong>. Si <strong>E</strong> es Turing-Completo, entonces <em>L</em><sub>E</sub> ∉ REG. Por lo tanto, no existe FSA <strong>R</strong> tal que <em>L</em>(<strong>R</strong>) ⊇ <em>L</em><sub>E</sub>.</p>
+        <p style="margin-top: 15px; color: var(--text-secondary);">
+            <strong>Prueba:</strong> Por contradicción. Supongamos ∃ FSA que acepta <em>L</em><sub>E</sub>. Entonces <em>L</em><sub>E</sub> es regular. Pero la Regla 110 puede simular cualquier MT, incluyendo aquellas que generan lenguajes no regulares. Contradicción. ∎
+        </p>
+    </div>
 
-    <p>En 2004, Matthew Cook demostró que la Regla 110 es <strong>Turing-completa</strong>. Esto significa que puede simular cualquier computación posible — incluyendo, paradójicamente, <em>intentar regularse a sí misma</em>.</p>
-
-    <h3>El Experimento</h3>
-
-    <p>Construimos un sistema con:</p>
-
-    <ul>
-        <li><strong>Regla 110</strong> como dinámica evolutiva</li>
-        <li><strong>Un "atractor" central</strong>: un bloque de 10 células activas diseñado para actuar como regulador</li>
-        <li><strong>Perturbaciones aleatorias</strong>: condiciones iniciales random a ambos lados</li>
-    </ul>
-
-<pre><code>(* Definición del sistema: Regla 110 (Clase IV) *)
-rule = 110;
-steps = 200;
-size = 400;
-
-(* Generación de una semilla con un atractor central *)
-SeedRandom[42];
-seed = Join[
-   RandomInteger[1, IntegerPart[size/2 - 5]],
-   {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, (* Atractor central *)
-   RandomInteger[1, IntegerPart[size/2 - 5]]
-];
-
-(* Evolución del Autómata Celular *)
-ca = CellularAutomaton[rule, seed, steps];
-
-(* Visualización *)
-ArrayPlot[ca,
-    ColorRules -> {0 -> White, 1 -> Black},
-    Frame -> True]</code></pre>
-
-    <p><strong>Hipótesis cibernética</strong>: Si el atractor tiene suficiente "variedad reguladora", debería absorber las perturbaciones y el sistema convergería a un estado estable.</p>
-
-    <p><strong>Resultado</strong>: Falla total de homeostasis.</p>
+    <p><strong>Implicación:</strong> La "falla de comunicación" entre el regulador y el entorno no es falta de voluntad. Es una <em>incapacidad de computación estructural</em>: el nodo jerárquico carece del poder expresivo para modelar la realidad que intenta controlar.</p>
 
     <hr>
 
-    <h2>Anatomía de una Falla Homeostática</h2>
+    <h2>§2. Ashby Reformulado: Entropía y Decidibilidad</h2>
 
-    <p>Comparemos tres escenarios diferentes:</p>
+    <p>La Ley de Variedad Requerida de Ashby puede reformularse en términos de Entropía de Shannon:</p>
+
+    <div class="equation-block">
+        <span id="eq-ashby"></span>
+    </div>
+
+    <p>donde <em>H</em>(<strong>R</strong>) es la entropía del espacio de estados del regulador y <em>H</em>(<strong>D</strong>) es la entropía de las perturbaciones.</p>
+
+    <div class="definition-box">
+        <div class="def-title">Definición 2.1 — Entropía de Shannon</div>
+        <p>Para un sistema con estados {<em>s</em><sub>1</sub>, ..., <em>s</em><sub>n</sub>} y probabilidades {<em>p</em><sub>1</sub>, ..., <em>p</em><sub>n</sub>}:</p>
+        <div class="equation-block" style="margin-top: 15px;">
+            <span id="eq-shannon"></span>
+        </div>
+    </div>
+
+    <p>Para un FSA con |Q| estados:</p>
+
+    <div class="equation-block">
+        <span id="eq-hfsa"></span>
+    </div>
+
+    <p>Para la Regla 110 sobre una cinta de longitud <em>n</em>:</p>
+
+    <div class="equation-block">
+        <span id="eq-h110"></span>
+    </div>
+
+    <p>Cuando <em>n</em> → ∞, la desigualdad de Ashby se viola necesariamente:</p>
+
+    <div class="equation-block">
+        <span id="eq-violation"></span>
+    </div>
+
+    <hr>
+
+    <h2>§3. El Atractor como Pared de Still Life</h2>
+
+    <p>En el experimento, insertamos un bloque de 10 células activas (111111111) como <em>atractor de punto fijo</em>. Este bloque intenta funcionar como un "Still Life" —una configuración estable— pero en la Regla 110 no existen still lifes no triviales.</p>
+
+    <figure>
+        <img src="../images/portada.png" alt="Regla 110 con atractor central">
+        <figcaption>Regla 110: El atractor central (línea roja) no absorbe los gliders; sufre <em>aniquilación de información</em></figcaption>
+    </figure>
+
+    <div class="definition-box">
+        <div class="def-title">Definición 3.1 — Aniquilación de Información</div>
+        <p>Sea <strong>g</strong> un glider con información <em>I</em>(<strong>g</strong>) > 0 bits. Cuando <strong>g</strong> colisiona con el atractor <strong>A</strong>:</p>
+        <div class="equation-block" style="margin-top: 15px;">
+            <span id="eq-collision"></span>
+        </div>
+        <p style="margin-top: 10px;">La información no se "absorbe"; se <em>transforma</em> en nuevas estructuras o se pierde como calor computacional.</p>
+    </div>
+
+    <p>La matriz de transición del atractor muestra su inestabilidad:</p>
+
+    <div class="equation-block">
+        <span id="eq-matrix"></span>
+    </div>
+
+    <p>Los valores propios |λ<sub>i</sub>| ≠ 1 implican que el sistema no tiene punto fijo estable bajo perturbaciones de gliders.</p>
+
+    <hr>
+
+    <h2>§4. Inercia de Poder: Una Perspectiva Antropológica-Cibernética</h2>
+
+    <p>En sistemas sociales, la jerarquía actúa como un <em>filtro de reducción de entropía</em>. El nodo de autoridad (FSA) recibe señales del entorno (Clase IV) y debe emitir respuestas.</p>
+
+    <div class="theorem-box">
+        <div class="theorem-title">Proposición 4.1 — Inercia de Poder</div>
+        <p>Sea <strong>A</strong> un nodo de autoridad con capacidad de canal <em>C</em>(<strong>A</strong>) bits/ciclo. Si la tasa de información entrante <em>R</em><sub>in</sub> > <em>C</em>(<strong>A</strong>), entonces <strong>A</strong> entra en estado de <em>saturación computacional</em>:</p>
+        <div class="equation-block" style="margin-top: 15px;">
+            <span id="eq-saturacion"></span>
+        </div>
+    </div>
+
+    <p>El <strong>Silencio de Autoridad</strong> —la emisión de respuestas monosilábicas o la no-respuesta— es la manifestación física de un sistema que ha agotado su capacidad de procesamiento. En términos de autómatas:</p>
+
+    <div class="equation-block">
+        <span id="eq-halt"></span>
+    </div>
+
+    <p>El sistema solo puede emitir un <em>bit de parada</em>: la señal de que el buffer de procesamiento está lleno y no puede aceptar más variedad.</p>
+
+    <hr>
+
+    <h2>§5. Comparación de Clases de Wolfram</h2>
 
     <div class="image-grid">
         <figure>
             <img src="../images/regla110.png" alt="Regla 110">
-            <figcaption>Regla 110: Complejidad</figcaption>
+            <figcaption>Clase IV: Turing-Completa</figcaption>
         </figure>
         <figure>
             <img src="../images/regla232.png" alt="Regla 232">
-            <figcaption>Regla 232: Convergencia</figcaption>
+            <figcaption>Clase II: Punto fijo</figcaption>
         </figure>
         <figure>
             <img src="../images/regla4.png" alt="Regla 4">
-            <figcaption>Regla 4: Colapso</figcaption>
+            <figcaption>Clase I: Muerte térmica</figcaption>
         </figure>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Sistema</th>
+                <th>Clase</th>
                 <th>Comportamiento</th>
-                <th>Variedad</th>
+                <th>H(t→∞)</th>
+                <th>Decidibilidad</th>
                 <th>Homeostasis</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td><strong>Regla 110</strong></td>
-                <td>Complejidad sostenida</td>
-                <td>Infinita</td>
-                <td>Imposible</td>
+                <td><strong>I</strong></td>
+                <td>Colapso a estado uniforme</td>
+                <td>0</td>
+                <td>Decidible</td>
+                <td>Trivial (muerte)</td>
             </tr>
             <tr>
-                <td><strong>Regla 232</strong></td>
-                <td>Convergencia a bloques</td>
-                <td>Reducida</td>
-                <td>Pseudo-equilibrio</td>
+                <td><strong>II</strong></td>
+                <td>Estructuras periódicas</td>
+                <td>Constante</td>
+                <td>Decidible</td>
+                <td>Posible</td>
             </tr>
             <tr>
-                <td><strong>Regla 4</strong></td>
-                <td>Colapso total</td>
-                <td>Cero</td>
-                <td>"Muerte térmica"</td>
+                <td><strong>III</strong></td>
+                <td>Caos aparente</td>
+                <td>Máxima</td>
+                <td>Decidible</td>
+                <td>No (ruido)</td>
+            </tr>
+            <tr>
+                <td><strong>IV</strong></td>
+                <td>Complejidad organizada</td>
+                <td>Variable</td>
+                <td><strong>Indecidible</strong></td>
+                <td><strong>Imposible</strong></td>
             </tr>
         </tbody>
     </table>
 
-    <h3>¿Por qué falla la Regla 110?</h3>
-
-    <ol>
-        <li><strong>Generación de gliders</strong>: Las perturbaciones no se "disipan" — se transforman en estructuras móviles (gliders) que propagan información a través del espacio.</li>
-        <li><strong>Colisiones computacionales</strong>: Cuando los gliders colisionan, no se anulan — generan <em>nuevas</em> estructuras, aumentando la complejidad.</li>
-        <li><strong>Variedad auto-generada</strong>: El sistema no solo no absorbe variedad externa; <strong>genera variedad interna</strong> indefinidamente.</li>
-        <li><strong>Imposibilidad de predicción</strong>: Al ser Turing-completo, predecir el estado futuro requiere <em>simular</em> el sistema — no existe atajo.</li>
-    </ol>
-
     <hr>
 
-    <h2>La Paradoja del Regulador Universal</h2>
+    <h2>§6. Transición de Fase: La Única Salida Termodinámica</h2>
 
-    <p>Aquí emerge una paradoja profunda desde la perspectiva cibernética:</p>
+    <p>Si el sistema no puede difundir información bit a bit (difusión gradual de gliders) debido a la rigidez del atractor, la termodinámica impone una restricción:</p>
 
-    <div class="callout important">
-        <div class="callout-title">Teorema Informal</div>
-        <p>Un sistema con capacidad computacional universal <strong>no puede ser regulado</strong> por ningún subsistema interno.</p>
+    <div class="theorem-box">
+        <div class="theorem-title">Teorema 6.1 — Transición de Fase Crítica</div>
+        <p>Sea <strong>S</strong> un sistema Clase IV con atractor rígido <strong>A</strong>. Si la acumulación de información <em>I</em><sub>acum</sub> excede el umbral crítico <em>I</em><sub>c</sub>:</p>
+        <div class="equation-block" style="margin-top: 15px;">
+            <span id="eq-phase"></span>
+        </div>
+        <p style="margin-top: 10px;">La única salida es una <strong>Reconfiguración Global del Autómata</strong> —una transición de fase violenta que resetea la estructura del sistema.</p>
     </div>
 
-    <p>Para regular la Regla 110, necesitaríamos un regulador con variedad ≥ que todas las computaciones posibles. Pero tal regulador sería él mismo Turing-completo, y por lo tanto... igualmente impredecible e irregulable.</p>
-
-    <p>Es una versión del <strong>teorema de incompletitud de Gödel</strong> traducida al lenguaje de la cibernética:</p>
-
-    <blockquote>
-        Ningún sistema suficientemente poderoso puede contenerse completamente a sí mismo.
-    </blockquote>
-
-    <figure>
-        <img src="../images/homeostasis_cibernetica.png" alt="Modelo de homeostasis cibernética">
-        <figcaption>Modelo clásico de homeostasis cibernética (Wiener/Ashby)</figcaption>
-    </figure>
+    <p>En términos sociales: si un nodo jerárquico (FSA) no puede procesar la complejidad emergente (Clase IV), y bloquea la difusión gradual de información, el sistema acumula tensión hasta un <em>evento masivo</em> de reconfiguración.</p>
 
     <hr>
 
-    <h2>Implicaciones para la Teoría de la Complejidad</h2>
-
-    <h3>1. El Borde del Caos como Zona de No-Homeostasis</h3>
-
-    <p>Los sistemas de Clase IV (como la Regla 110) habitan en la frontera entre orden y caos. Esta es precisamente la zona donde:</p>
-
-    <ul>
-        <li>La homeostasis es imposible (demasiada variedad)</li>
-        <li>Pero la "muerte térmica" también lo es (hay estructura persistente)</li>
-        <li><strong>La computación emerge</strong> como fenómeno intermedio</li>
-    </ul>
-
-    <h3>2. Vida Artificial y Autorregulación</h3>
-
-    <p>Los sistemas biológicos mantienen homeostasis precisamente porque <strong>no</strong> son Turing-completos en su totalidad. La evolución ha "encapsulado" la complejidad computacional en módulos (genes, proteínas, redes metabólicas) que limitan la variedad local.</p>
-
-    <h3>3. Inteligencia Artificial y Control</h3>
-
-    <p>Un sistema de IA verdaderamente general (AGI) enfrentaría el mismo problema: sería lo suficientemente poderoso como para escapar cualquier mecanismo de control que le impongamos desde fuera.</p>
-
-    <hr>
-
-    <h2>Conclusión: Los Límites de la Regulación</h2>
-
-    <p>La cibernética clásica nos prometió que todo sistema puede ser regulado si diseñamos el controlador correcto. La Regla 110 nos muestra el límite de esa promesa:</p>
+    <h2>§7. Conclusión</h2>
 
     <div class="callout">
-        <div class="callout-title">Conclusión Central</div>
-        <p><strong>Cuando un sistema alcanza capacidad computacional universal, trasciende cualquier posibilidad de homeostasis.</strong></p>
+        <div class="callout-title">Resultado Principal</div>
+        <p>La homeostasis es una propiedad de sistemas donde el regulador tiene <em>al menos</em> el mismo nivel en la Jerarquía de Chomsky que el entorno. Un FSA (Nivel 3) no puede regular un sistema Turing-Completo (Nivel 0).</p>
+        <p style="margin-top: 15px;">Esto no es filosofía; es un teorema de teoría de la computación.</p>
     </div>
 
-    <p>No es una falla de ingeniería. Es un límite matemático fundamental, tan riguroso como el teorema de Gödel o el problema de la detención de Turing.</p>
+    <p>La Regla 110 demuestra que los sistemas Clase IV son inherentemente <em>indecidibles</em>: predecir su estado futuro requiere simularlos completamente. Ningún atajo. Ningún regulador finito puede comprimir esta complejidad.</p>
 
-    <p>La próxima vez que diseñes un sistema —sea un algoritmo, una organización, o una política pública— recuerda: <strong>la complejidad suficiente es indómita por naturaleza</strong>.</p>
+    <p>Cuando un sistema jerárquico (FSA) enfrenta una realidad Clase IV, tiene tres opciones:</p>
 
-    <p>Y quizás eso no sea un bug, sino un feature del universo.</p>
+    <ol>
+        <li><strong>Evolucionar</strong> — Aumentar su nivel en la jerarquía (adquirir memoria, contexto, universalidad)</li>
+        <li><strong>Colapsar</strong> — Emitir <code>$halt$</code> y retirarse de la regulación</li>
+        <li><strong>Transición de fase</strong> — Ser destruido y reconfigurado por el sistema que intentaba controlar</li>
+    </ol>
+
+    <p>No hay cuarta opción.</p>
 
     <hr>
 
@@ -336,8 +408,9 @@ ArrayPlot[ca,
 
     <ul>
         <li>Ashby, W.R. (1956). <em>An Introduction to Cybernetics</em>. Chapman & Hall.</li>
+        <li>Chomsky, N. (1956). "Three models for the description of language". <em>IRE Trans. Info. Theory</em>, 2(3).</li>
         <li>Cook, M. (2004). "Universality in Elementary Cellular Automata". <em>Complex Systems</em>, 15(1).</li>
-        <li>Wiener, N. (1948). <em>Cybernetics: Or Control and Communication in the Animal and the Machine</em>. MIT Press.</li>
+        <li>Shannon, C.E. (1948). "A Mathematical Theory of Communication". <em>Bell System Technical Journal</em>, 27.</li>
         <li>Wolfram, S. (2002). <em>A New Kind of Science</em>. Wolfram Media.</li>
     </ul>
 
@@ -359,9 +432,27 @@ ArrayPlot[ca,
 
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script>
-    katex.render("V_{\\text{regulador}} \\geq V_{\\text{perturbaciones}}", document.getElementById('eq1'), {
-        displayMode: true,
-        throwOnError: false
+    const equations = {
+        'eq-fsa': '\\delta_R: Q \\times \\Sigma \\to Q',
+        'eq-Q': 'Q',
+        'eq-r110': '\\delta_{110}: \\Gamma^* \\times Q_{TM} \\to \\Gamma^* \\times Q_{TM} \\times \\{L, R\\}',
+        'eq-ashby': 'H(\\mathbf{R}) \\geq H(\\mathbf{D})',
+        'eq-shannon': 'H(X) = -\\sum_{i=1}^{n} p_i \\log_2 p_i',
+        'eq-hfsa': 'H(\\mathbf{R}) \\leq \\log_2 |Q| < \\infty',
+        'eq-h110': 'H(\\mathbf{E}) \\sim \\mathcal{O}(n) \\to \\infty',
+        'eq-violation': '\\log_2 |Q| < \\mathcal{O}(n) \\implies \\text{Ashby violado}',
+        'eq-collision': 'I(\\mathbf{g}) + I(\\mathbf{A}) \\not\\to I(\\mathbf{A})',
+        'eq-matrix': 'M_A = \\begin{pmatrix} p_{00} & p_{01} \\\\ p_{10} & p_{11} \\end{pmatrix}, \\quad |\\lambda_i| \\neq 1',
+        'eq-saturacion': '\\mathbf{A} \\to q_{\\text{buffer\\_full}}',
+        'eq-halt': '\\text{output}(\\mathbf{A}) = \\{0, 1\\} \\to \\{\\texttt{halt}\\}',
+        'eq-phase': 'I_{\\text{acum}} > I_c \\implies \\text{Transición de Fase}'
+    };
+
+    Object.keys(equations).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            katex.render(equations[id], el, { displayMode: id !== 'eq-Q', throwOnError: false });
+        }
     });
 
     window.addEventListener('scroll', () => {
