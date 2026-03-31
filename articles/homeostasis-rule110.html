@@ -146,6 +146,11 @@
 
 <article class="article-content">
 
+    <div class="callout" style="border-color: var(--gold); background: rgba(212, 168, 83, 0.08);">
+        <div class="callout-title" style="color: var(--gold);">Abstract</div>
+        <p style="color: var(--text-primary);">Un regulador modelado como Autómata de Estados Finitos (Nivel 3, Chomsky) no puede mantener homeostasis sobre un sistema Turing-Completo (Nivel 0). Esto no es una conjetura: es un teorema de teoría de la computación. La Ley de Ashby, reformulada como <em>H</em>(<strong>R</strong>) ≥ <em>H</em>(<strong>D</strong>), se viola necesariamente cuando el entorno tiene entropía no acotada. Demostramos que el "silencio de autoridad" en sistemas jerárquicos es saturación computacional —el regulador emite un bit de <code>halt</code> porque su buffer está lleno. La única salida para un sistema Clase IV con atractor rígido es transición de fase: reconfiguración global. No hay cuarta opción.</p>
+    </div>
+
     <h2>§1. El Problema: FSA vs. Máquina Universal</h2>
 
     <p>Sea <strong>R</strong> un nodo regulador modelado como un <em>Autómata de Estados Finitos</em> (FSA) —Nivel 3 de la Jerarquía de Chomsky— intentando mantener homeostasis sobre un entorno <strong>E</strong> que evoluciona bajo la Regla 110 de Wolfram, demostrada <em>Turing-Completa</em> —Nivel 0.</p>
@@ -368,6 +373,11 @@
     <h2>§6. Transición de Fase: La Única Salida Termodinámica</h2>
 
     <p>Si el sistema no puede difundir información bit a bit (difusión gradual de gliders) debido a la rigidez del atractor, la termodinámica impone una restricción:</p>
+
+    <figure>
+        <img src="../images/reconfiguracion_global.png" alt="Reconfiguración Global - Transición de Fase">
+        <figcaption>Reconfiguración Global: El atractor rígido (líneas rojas) acumula tensión hasta el punto crítico. La línea roja horizontal marca la transición de fase —el momento donde el sistema se reconfigura globalmente.</figcaption>
+    </figure>
 
     <div class="theorem-box">
         <div class="theorem-title">Teorema 6.1 — Transición de Fase Crítica</div>
