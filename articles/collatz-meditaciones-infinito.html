@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collatz: Meditaciones sobre el Infinito | Omar Alvarado</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .article-hero {
+            padding: 160px 40px 80px;
+            text-align: center;
+            position: relative;
+        }
+        .article-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 2px;
+            background: var(--gradient-gold);
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            transition: color 0.3s ease;
+        }
+        .back-link:hover { color: var(--gold); }
+        .article-tags {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .article-hero h1 {
+            max-width: 900px;
+            margin: 0 auto 20px;
+        }
+        .article-subtitle {
+            font-size: 1.3rem;
+            color: var(--gold-dim);
+            font-style: italic;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .article-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .abstract {
+            max-width: 750px;
+            margin: 0 auto var(--spacing-xl);
+            padding: var(--spacing-lg);
+            background: rgba(212, 168, 83, 0.03);
+            border: 1px solid var(--border-gold);
+            border-radius: var(--radius-lg);
+        }
+        .abstract-title {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+            margin-bottom: var(--spacing-sm);
+        }
+        .abstract p {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: var(--spacing-sm);
+        }
+        .abstract p:last-child {
+            margin-bottom: 0;
+        }
+        .pullquote {
+            font-size: 1.4rem;
+            font-style: italic;
+            color: var(--gold);
+            text-align: center;
+            padding: var(--spacing-lg) var(--spacing-md);
+            margin: var(--spacing-xl) 0;
+            border-top: 1px solid var(--border-gold);
+            border-bottom: 1px solid var(--border-gold);
+        }
+        .section-roman {
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            color: var(--gold-dim);
+            margin-right: 10px;
+        }
+        @media (max-width: 700px) {
+            .article-hero { padding: 120px 20px 60px; }
+            .abstract { padding: var(--spacing-md); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-animation"></div>
+<div class="grid-overlay"></div>
+
+<nav>
+    <a href="../index.html" class="nav-logo"><span>א</span> OMAR ALVARADO</a>
+    <ul class="nav-links">
+        <li><a href="../index.html#articles">Artículos</a></li>
+        <li><a href="../index.html#research">Investigación</a></li>
+        <li><a href="../cv.html">CV</a></li>
+        <li><a href="https://github.com/omaralvaradoluna" target="_blank">GitHub</a></li>
+    </ul>
+</nav>
+
+<header class="article-hero">
+    <a href="../index.html" class="back-link">← Volver al Inicio</a>
+    <div class="article-tags">
+        <span class="tag">Teoría de la Computación</span>
+        <span class="tag">Filosofía Matemática</span>
+        <span class="tag gold">Nuevo</span>
+    </div>
+    <h1>Collatz: Meditaciones sobre el Infinito</h1>
+    <p class="article-subtitle">Un viaje al borde de lo computable</p>
+    <div class="article-info">
+        <span>Abril 2026</span>
+        <span>•</span>
+        <span>20 min lectura</span>
+    </div>
+</header>
+
+<article class="article-content">
+
+    <div class="abstract">
+        <div class="abstract-title">Abstract</div>
+        <p>
+            Este artículo no pretende demostrar la conjetura de Collatz. Después de 90 años de intentos fallidos por parte de matemáticos distinguidos, sería presuntuoso sugerir que tenemos la solución.
+        </p>
+        <p>
+            Nuestro objetivo es más modesto y, creemos, más valioso: <strong>entender el problema antes de intentar resolverlo</strong>. En matemáticas, como en ingeniería, una parte fundamental del trabajo consiste en comprender cuál es el verdadero problema. Muchos intentos de demostración fracasan no por falta de técnica, sino por atacar la pregunta equivocada.
+        </p>
+        <p>
+            Documentamos aquí un viaje de exploración: la construcción de una Máquina de Turing que ejecuta Collatz, la descomposición en reglas locales de Wolfram, el análisis del espacio fraccional, y las restricciones diofánticas sobre ciclos. Cada herramienta reveló estructura, pero también limitaciones. Y en esas limitaciones encontramos lecciones sobre la naturaleza del infinito, los límites de la verificación empírica, y la diferencia entre conocer las reglas y predecir el destino.
+        </p>
+        <p>
+            Este es un documento didáctico. Riguroso donde pudimos serlo, honesto donde encontramos muros.
+        </p>
+    </div>
+
+    <hr>
+
+    <h2>Preludio: La Pregunta Imposible</h2>
+
+    <p>Hay una pregunta que no puedes responder con ninguna computadora del universo:</p>
+
+    <p><em>¿Todo número positivo, eventualmente, llega a 1?</em></p>
+
+    <p>No porque la pregunta sea incoherente. No porque carezca de significado. Sino porque <strong>hay infinitos números</strong>.</p>
+
+    <p>Y aquí comienza nuestra meditación.</p>
+
+    <hr>
+
+    <h2><span class="section-roman">I.</span> El Abismo del Infinito</h2>
+
+    <h3>La Trampa de la Verificación</h3>
+
+    <p>Supongamos que tienes la computadora más poderosa jamás construida. Le das un número. Ella aplica las reglas:</p>
+
+    <ul>
+        <li>Si es par, divide entre 2</li>
+        <li>Si es impar, multiplica por 3 y suma 1</li>
+    </ul>
+
+    <p>La máquina calcula. Eventualmente, llega a 1.</p>
+
+    <p><em>"Funciona"</em>, dices.</p>
+
+    <p>Le das otro número. Funciona. Otro. Funciona. Un millón. Diez millones. <span id="eq-big-num"></span> números.</p>
+
+    <p><strong>Todos funcionan.</strong></p>
+
+    <p>¿Has probado la conjetura?</p>
+
+    <p>No.</p>
+
+    <p>Porque detrás de cada número verificado hay infinitos números no verificados. Y el infinito no se agota. No se reduce. No se aproxima.</p>
+
+    <blockquote>
+        <strong>La verificación empírica es impotente ante el infinito.</strong>
+    </blockquote>
+
+    <p>Puedes verificar todos los números que quieras. El conjunto de números que <em>no</em> has verificado sigue siendo infinito. Igual de infinito que antes de empezar.</p>
+
+    <h3>La Paradoja del Progreso</h3>
+
+    <p>En 2020, se verificó Collatz para todos los números hasta <span id="eq-2-68"></span>. Eso es aproximadamente <span id="eq-sci"></span> números.</p>
+
+    <p>Un logro computacional extraordinario.</p>
+
+    <p>Y sin embargo, en términos de "fracción del infinito verificada", el progreso es exactamente <strong>cero</strong>.</p>
+
+    <div class="equation-block">
+        <span id="eq-fraction"></span>
+    </div>
+
+    <p>Esta no es una metáfora. Es aritmética.</p>
+
+    <p>Meditar sobre esto es incómodo. Revela algo sobre la naturaleza de los problemas que involucran el infinito: no son problemas de <em>cantidad</em>, son problemas de <em>estructura</em>.</p>
+
+    <hr>
+
+    <h2><span class="section-roman">II.</span> La Máquina Ideal</h2>
+
+    <h3>El Regalo de Turing</h3>
+
+    <p>En 1936, Alan Turing imaginó algo imposible: una máquina con cinta <strong>infinita</strong>.</p>
+
+    <p>No "muy larga". No "suficientemente grande". <em>Infinita</em>.</p>
+
+    <p>Una cinta que se extiende sin fin en ambas direcciones. Una máquina que nunca se queda sin espacio. Un autómata que puede, en principio, procesar cualquier número, sin importar cuántos dígitos tenga.</p>
+
+    <p>Esta abstracción — la Máquina de Turing — no es un dispositivo físico. Es una <strong>idea</strong>. Un objeto matemático.</p>
+
+    <p>Y aquí está el giro: precisamente porque es imposible de construir, es perfecta para razonar sobre el infinito.</p>
+
+    <h3>Collatz como Máquina de Turing</h3>
+
+    <p>Construimos una Máquina de Turing que ejecuta Collatz:</p>
+
+    <pre><code>7 estados: SEEK, DIV, MUL₀, MUL₁, MUL₂, BACK, HALT
+Alfabeto: {0, 1, □}
+Cinta: infinita (por definición)</code></pre>
+
+    <p>La máquina es trivial. Lee el bit menos significativo. Si es 0, borra y avanza (división entre 2). Si es 1, aplica las reglas de multiplicación. Cuando la cinta contiene solo un <code>1</code> solitario, se detiene.</p>
+
+    <p><strong>El circuito equivalente:</strong> 3 flip-flops. ~100 compuertas lógicas.</p>
+
+    <p>Un mecanismo que cabe en la palma de tu mano.</p>
+
+    <h3>La Pregunta Transformada</h3>
+
+    <p>La conjetura de Collatz se convierte en:</p>
+
+    <blockquote>
+        ¿Esta máquina se detiene para toda entrada?
+    </blockquote>
+
+    <p>Esta es una pregunta sobre el <strong>comportamiento</strong> de un sistema abstracto. No sobre números específicos. Sobre la <em>estructura</em> del proceso.</p>
+
+    <p>Y aquí aprendimos algo profundo:</p>
+
+    <blockquote>
+        <strong>La Máquina de Turing nos permite preguntar sobre el infinito sin tener que tocarlo.</strong>
+    </blockquote>
+
+    <p>No verificamos cada número. Analizamos el <em>mecanismo</em>. Si podemos demostrar que el mecanismo siempre termina, hemos capturado infinitos casos en una sola prueba.</p>
+
+    <hr>
+
+    <h2><span class="section-roman">III.</span> El Cazador en el Laberinto</h2>
+
+    <h3>Las Reglas de Wolfram</h3>
+
+    <p>Descendimos más profundo. ¿Qué hace exactamente <code>3n + 1</code>?</p>
+
+    <p>Descompusimos la operación en 8 reglas locales — transformaciones bit a bit que solo miran el bit actual, el bit anterior, y un carry:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Patrón</th>
+                <th>Resultado</th>
+                <th>Carry</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>[0, 0, 0]</td><td>0</td><td>0</td></tr>
+            <tr><td>[0, 0, 1]</td><td>1</td><td>0</td></tr>
+            <tr><td>[0, 1, 0]</td><td>1</td><td>0</td></tr>
+            <tr><td>[0, 1, 1]</td><td>0</td><td>1</td></tr>
+            <tr><td>[1, 0, 0]</td><td>1</td><td>0</td></tr>
+            <tr><td>[1, 0, 1]</td><td>0</td><td>1</td></tr>
+            <tr><td>[1, 1, 0]</td><td>0</td><td>1</td></tr>
+            <tr><td>[1, 1, 1]</td><td>1</td><td>1</td></tr>
+        </tbody>
+    </table>
+
+    <p>El <code>+1</code> de Collatz es simplemente carry inicial = 1.</p>
+
+    <p>Todo lo demás es propagación local. Determinista. Mecánico.</p>
+
+    <h3>Lo que Pudimos Probar</h3>
+
+    <p>Con estas reglas, demostramos teoremas:</p>
+
+    <div class="callout">
+        <div class="callout-title">Teorema 1: Decremento del Sufijo</div>
+        <p>Si un número termina en <span id="eq-s-geq-2"></span> unos consecutivos, después de una transición tendrá exactamente <span id="eq-s-minus-1"></span> unos.</p>
+    </div>
+
+    <div class="callout">
+        <div class="callout-title">Teorema 2: Ceros Garantizados</div>
+        <p>Si un número termina en exactamente un 1 (patrón <code>...01</code>), entonces <code>3n + 1</code> termina en al menos 2 ceros.</p>
+    </div>
+
+    <p>Estos teoremas son <strong>verdaderos</strong>. Probados. Rigurosos.</p>
+
+    <h3>El Muro</h3>
+
+    <p>Pero cuando intentamos pasar de estas propiedades locales a la convergencia global... el argumento se detuvo.</p>
+
+    <p>Conocíamos todas las reglas. Podíamos predecir cada paso individual. Y sin embargo, no podíamos garantizar el destino final.</p>
+
+    <blockquote>
+        <strong>Conocer las leyes no implica conocer el futuro.</strong>
+    </blockquote>
+
+    <p>Esta es la irreducibilidad computacional de Wolfram: algunos sistemas solo pueden ser "ejecutados", no "predichos". Para saber qué hace Collatz con un número específico, a veces <em>no hay atajo</em> — tienes que correr la simulación.</p>
+
+    <hr>
+
+    <h2><span class="section-roman">IV.</span> La Geometría del Reverso</h2>
+
+    <h3>El Espejo del Infinito</h3>
+
+    <p>Intentamos un cambio de perspectiva. La transformación <span id="eq-inverse"></span>:</p>
+
+    <ul>
+        <li>Los enteros grandes se vuelven fracciones pequeñas</li>
+        <li>"Escapar a infinito" se convierte en "acercarse a cero"</li>
+        <li>La convergencia a 1 permanece fija (1/1 = 1)</li>
+    </ul>
+
+    <p>En este espacio invertido, vimos algo:</p>
+
+    <p>El intervalo [0, 1] se organiza en capas:</p>
+
+    <div class="equation-block">
+        <span id="eq-layers"></span>
+    </div>
+
+    <p>Cada capa es una barrera. Para que un número "escape a infinito" en el espacio entero, debe atravesar <em>infinitas capas</em> en espacio fraccional.</p>
+
+    <h3>La Simetría Oculta</h3>
+
+    <p>Y aquí encontramos una simetría casi poética:</p>
+
+    <p class="pullquote">
+        Así como no hay un número más grande,<br>
+        no hay un "escape" verdadero al infinito.
+    </p>
+
+    <p>La misma propiedad del infinito que crea espacio ilimitado para huir, crea barreras ilimitadas que contienen.</p>
+
+    <p>El infinito se contiene a sí mismo.</p>
+
+    <hr>
+
+    <h2><span class="section-roman">V.</span> La Constante Prohibida</h2>
+
+    <h3>log₂(3) ≈ 1.58496...</h3>
+
+    <p>En el corazón de Collatz vive un número:</p>
+
+    <div class="equation-block">
+        <span id="eq-rho"></span>
+    </div>
+
+    <p>Es irracional. De hecho, es trascendente (por Gelfond-Schneider).</p>
+
+    <p>¿Por qué importa?</p>
+
+    <h3>La Imposibilidad de los Ciclos</h3>
+
+    <p>Un ciclo en Collatz requeriría que:</p>
+
+    <div class="equation-block">
+        <span id="eq-cycle"></span>
+    </div>
+
+    <p>para algunos enteros <em>a</em>, <em>b</em>.</p>
+
+    <p>Pero esto es equivalente a:</p>
+
+    <div class="equation-block">
+        <span id="eq-cycle-log"></span>
+    </div>
+
+    <p>Si <span id="eq-log23-inline"></span> fuera racional, esto tendría solución. Pero es irracional. No hay fracción <em>a/b</em> que lo iguale exactamente.</p>
+
+    <p><strong>Por lo tanto:</strong> <span id="eq-no-equal"></span> para todos los enteros positivos.</p>
+
+    <p><strong>Por lo tanto:</strong> No hay ciclos "perfectos" donde las multiplicaciones y divisiones se cancelen exactamente.</p>
+
+    <h3>El Borde de la Solvabilidad</h3>
+
+    <p>¿Por qué 3? ¿Por qué no 2 o 5?</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Variante</th>
+                <th>Comportamiento</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td><span id="eq-2n1"></span></td><td>Trivialmente converge</td></tr>
+            <tr><td><span id="eq-3n1"></span></td><td><em>Caos estructurado</em></td></tr>
+            <tr><td><span id="eq-5n1"></span></td><td>Diverge (probado)</td></tr>
+        </tbody>
+    </table>
+
+    <p><strong>3 es el único primo entre 2 y 4.</strong></p>
+
+    <p>Esto lo coloca en un umbral crítico:</p>
+    <ul>
+        <li><span id="eq-32"></span> → cada paso impar crece</li>
+        <li><span id="eq-log32"></span> → el crecimiento es <em>subexponencial</em> respecto a las divisiones</li>
+    </ul>
+
+    <p>Collatz vive en el filo. Demasiado cerca de 2 para diverger trivialmente. Demasiado cerca de 4 para converger trivialmente.</p>
+
+    <p>Recordamos el problema de los tres cuerpos en física: dos cuerpos son predecibles, cuatro son caóticos, <strong>tres</strong> son el umbral donde emerge la complejidad.</p>
+
+    <hr>
+
+    <h2><span class="section-roman">VI.</span> La Trampa Lógica</h2>
+
+    <h3>El Dilema del +1</h3>
+
+    <p>Algo curioso emerge del análisis:</p>
+
+    <p>Para que exista un ciclo no trivial, el <code>+1</code> debe ser <strong>significativo</strong> — debe poder "doblar" la trayectoria de regreso.</p>
+
+    <p>Pero el <code>+1</code> solo es significativo para números <strong>pequeños</strong>.</p>
+
+    <p>Los números pequeños han sido <strong>verificados computacionalmente</strong>. No hay ciclos ahí.</p>
+
+    <p>Para números grandes, <code>+1</code> es despreciable:</p>
+
+    <div class="equation-block">
+        <span id="eq-negligible"></span>
+    </div>
+
+    <p>El sistema se comporta como <span id="eq-pure"></span> puro — una contracción logarítmica. No hay ciclos posibles.</p>
+
+    <p><strong>El ciclo necesita condiciones que se excluyen mutuamente.</strong></p>
+
+    <p>Es como buscar un número que sea simultáneamente menor que 10 y mayor que todos los números verificados hasta <span id="eq-10-68"></span>.</p>
+
+    <p>La estructura del problema excluye sus propias excepciones.</p>
+
+    <hr>
+
+    <h2><span class="section-roman">VII.</span> Lo que Aprendimos</h2>
+
+    <h3>Sobre las Herramientas</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Herramienta</th>
+                <th>Qué nos enseñó</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Máquinas de Turing</td><td>El infinito se captura con abstracción, no con fuerza bruta</td></tr>
+            <tr><td>Reglas de Wolfram</td><td>Lo local no implica lo global</td></tr>
+            <tr><td>Espacio fraccional</td><td>El infinito tiene geometría</td></tr>
+            <tr><td><span id="eq-log23-table"></span></td><td>Algunas constantes son fundamentales como π o e</td></tr>
+            <tr><td>Análisis diofántico</td><td>Los ciclos están atrapados en contradicciones</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Sobre el Infinito</h3>
+
+    <p>El infinito no es un número grande. Es una <em>cualidad</em>.</p>
+
+    <p>No puedes "acercarte" al infinito sumando. No puedes "agotar" el infinito verificando.</p>
+
+    <p>Pero puedes <strong>razonar</strong> sobre el infinito con estructuras finitas: máquinas abstractas, propiedades algebraicas, argumentos lógicos.</p>
+
+    <h3>Sobre los Límites</h3>
+
+    <p>No resolvimos Collatz.</p>
+
+    <p>Pero aprendimos <em>por qué</em> es difícil:</p>
+    <ul>
+        <li>Es demasiado simple para técnicas sofisticadas</li>
+        <li>Es demasiado global para técnicas locales</li>
+        <li>Vive en el borde exacto de la solvabilidad</li>
+    </ul>
+
+    <p>Y quizás lo más importante:</p>
+
+    <blockquote>
+        <strong>Algunos problemas no están ahí para ser resueltos. Están ahí para enseñarnos a pensar.</strong>
+    </blockquote>
+
+    <hr>
+
+    <h2>Coda: El Valor de la Pregunta</h2>
+
+    <p>Paul Erdős dijo sobre Collatz:</p>
+
+    <blockquote>
+        "Las matemáticas no están listas para problemas así."
+    </blockquote>
+
+    <p>Quizás tenía razón. O quizás la preparación no es el punto.</p>
+
+    <p>Meditar sobre Collatz es meditar sobre:</p>
+    <ul>
+        <li>La naturaleza del infinito</li>
+        <li>Los límites de la verificación empírica</li>
+        <li>El poder y la impotencia de la abstracción</li>
+        <li>La diferencia entre conocer las reglas y predecir el destino</li>
+    </ul>
+
+    <p>No conquistamos el problema. Pero el problema nos transformó.</p>
+
+    <p>Tres flip-flops contra el infinito. Y el infinito, por ahora, permanece.</p>
+
+    <hr>
+
+    <h2>Apéndice: Inventario del Viaje</h2>
+
+    <h3>Teoremas Probados</h3>
+    <ul>
+        <li>Decremento del sufijo binario (<span id="eq-ap-1"></span>)</li>
+        <li>Trailing zeros garantizados cuando s = 1</li>
+    </ul>
+
+    <h3>Restricciones Establecidas</h3>
+    <ul>
+        <li>Todo ciclo debe tener longitud <span id="eq-k-bound"></span></li>
+        <li>Los ciclos requieren aproximar <span id="eq-log23-ap"></span> con precisión imposible</li>
+    </ul>
+
+    <h3>Herramientas Matemáticas Exploradas</h3>
+    <ul>
+        <li>Máquinas de Turing y computabilidad</li>
+        <li>Autómatas celulares y reglas de Wolfram</li>
+        <li>Análisis p-ádico (valuaciones 2-ádicas)</li>
+        <li>Aproximación diofántica y fracciones continuas</li>
+        <li>Teoría de Baker (formas lineales en logaritmos)</li>
+        <li>Geometría fractal y espacio inverso</li>
+        <li>Renormalización (el +1 como perturbación irrelevante)</li>
+    </ul>
+
+    <hr>
+
+    <h2>Referencias</h2>
+
+    <ul>
+        <li>Lagarias, J.C. (2003). <em>The 3x+1 Problem: An Annotated Bibliography</em></li>
+        <li>Tao, T. (2019). <em>Almost all Collatz orbits attain almost bounded values</em></li>
+        <li>Wolfram, S. (2002). <em>A New Kind of Science</em></li>
+        <li>Steiner, R.P. (1977). <em>A theorem on the Syracuse problem</em></li>
+        <li>Simons, J. & de Weger, B. (2003). <em>Theoretical and computational bounds for m-cycles</em></li>
+        <li>Michel, P. (2014). <em>Simulation of the Collatz 3x+1 function by Turing machines</em>. arXiv:1409.7322</li>
+    </ul>
+
+    <p class="pullquote" style="margin-top: var(--spacing-xl);">
+        "La conjetura permanece abierta. Pero nosotros ya no."
+    </p>
+
+</article>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-brand"><span style="color: var(--gold);">א</span> Omar Alvarado Luna</div>
+        <div class="footer-links">
+            <a href="https://github.com/omaralvaradoluna" target="_blank">GitHub</a>
+            <a href="https://medium.com/@alonsoluna" target="_blank">Medium</a>
+            <a href="../cv.html">CV</a>
+        </div>
+        <div class="footer-copy">
+            © 2026 Omar Alvarado Luna — Construido con matemáticas y curiosidad.
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script>
+    const equations = {
+        'eq-big-num': '10^{20}',
+        'eq-2-68': '2^{68}',
+        'eq-sci': '2.95 \\times 10^{20}',
+        'eq-fraction': '\\frac{2^{68}}{\\infty} = 0',
+        'eq-s-geq-2': 's \\geq 2',
+        'eq-s-minus-1': 's - 1',
+        'eq-inverse': 'x \\to 1/x',
+        'eq-layers': 'L_1 = 1, \\quad L_2 = \\frac{1}{2}, \\quad L_3 = \\frac{1}{3}, \\quad \\ldots, \\quad L_n = \\frac{1}{n}',
+        'eq-rho': '\\rho = \\log_2(3) \\approx 1.58496\\ldots',
+        'eq-cycle': '3^a = 2^b',
+        'eq-cycle-log': '\\frac{a}{b} = \\frac{\\log(2)}{\\log(3)} = \\frac{1}{\\log_2(3)}',
+        'eq-log23-inline': '\\log_2(3)',
+        'eq-no-equal': '3^a \\neq 2^b',
+        'eq-2n1': '2n + 1',
+        'eq-3n1': '3n + 1',
+        'eq-5n1': '5n + 1',
+        'eq-32': '3/2 > 1',
+        'eq-log32': '\\log_2(3) < 2',
+        'eq-negligible': '\\frac{1}{10^{100}} \\approx 0',
+        'eq-pure': '3n/2',
+        'eq-10-68': '10^{68}',
+        'eq-log23-table': '\\log_2(3)',
+        'eq-ap-1': 's \\geq 2 \\to s-1',
+        'eq-k-bound': 'k > 10^{68}',
+        'eq-log23-ap': '\\log_2(3)'
+    };
+
+    Object.keys(equations).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            katex.render(equations[id], el, { throwOnError: false });
+        }
+    });
+
+    window.addEventListener('scroll', () => {
+        document.querySelector('nav').classList.toggle('scrolled', window.scrollY > 50);
+    });
+</script>
+
+</body>
+</html>
