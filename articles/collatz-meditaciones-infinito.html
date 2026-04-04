@@ -102,9 +102,47 @@
             color: var(--gold-dim);
             margin-right: 10px;
         }
+        .proof-box {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+        }
+        .proof-title {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: var(--spacing-md);
+            color: var(--accent);
+        }
+        .proof-box p {
+            margin-bottom: var(--spacing-sm);
+        }
+        .proof-box ul {
+            margin: var(--spacing-sm) 0;
+        }
+        .proof-box .equation-block {
+            margin: var(--spacing-md) 0;
+        }
+        .proof-box table {
+            margin: var(--spacing-md) 0;
+            font-size: 14px;
+        }
+        .qed {
+            text-align: right;
+            font-size: 1.2rem;
+            color: var(--gold);
+            margin-top: var(--spacing-md);
+            margin-bottom: 0 !important;
+        }
         @media (max-width: 700px) {
             .article-hero { padding: 120px 20px 60px; }
             .abstract { padding: var(--spacing-md); }
+            .proof-box { padding: var(--spacing-md); }
         }
     </style>
 </head>
@@ -302,17 +340,155 @@ Cinta: infinita (por definición)</code></pre>
 
     <h3>Lo que Pudimos Probar</h3>
 
-    <p>Con estas reglas, demostramos teoremas:</p>
+    <p>Con estas reglas, demostramos dos teoremas. A continuación presentamos los enunciados y sus demostraciones formales.</p>
 
-    <div class="callout">
-        <div class="callout-title">Teorema 1: Decremento del Sufijo</div>
-        <p>Si un número termina en <span id="eq-s-geq-2"></span> unos consecutivos, después de una transición tendrá exactamente <span id="eq-s-minus-1"></span> unos.</p>
-    </div>
-
+    <!-- TEOREMA 2: El más simple, lo ponemos primero pedagógicamente -->
     <div class="callout">
         <div class="callout-title">Teorema 2: Ceros Garantizados</div>
         <p>Si un número termina en exactamente un 1 (patrón <code>...01</code>), entonces <code>3n + 1</code> termina en al menos 2 ceros.</p>
     </div>
+
+    <div class="proof-box">
+        <div class="proof-title">Demostración</div>
+
+        <p><strong>Paso 1:</strong> Caracterización algebraica del patrón <code>...01</code></p>
+        <p>Un número que termina en <code>...01</code> en binario es equivalente a:</p>
+        <div class="equation-block">
+            <span id="eq-t2-form"></span>
+        </div>
+
+        <p><strong>Paso 2:</strong> Calculamos <span id="eq-t2-3n1-inline"></span></p>
+        <div class="equation-block">
+            <span id="eq-t2-calc"></span>
+        </div>
+
+        <p><strong>Paso 3:</strong> Conclusión</p>
+        <p>El resultado <span id="eq-t2-factor"></span> es siempre divisible por 4, lo que significa que en binario termina en al menos dos ceros: <code>...00</code></p>
+
+        <p class="qed">∎</p>
+    </div>
+
+    <p><strong>Verificación numérica:</strong></p>
+    <table>
+        <thead>
+            <tr><th>n</th><th>n (binario)</th><th>3n+1</th><th>3n+1 (binario)</th><th># ceros</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>5</td><td><code>101</code></td><td>16</td><td><code>10000</code></td><td>4</td></tr>
+            <tr><td>9</td><td><code>1001</code></td><td>28</td><td><code>11100</code></td><td>2</td></tr>
+            <tr><td>13</td><td><code>1101</code></td><td>40</td><td><code>101000</code></td><td>3</td></tr>
+            <tr><td>21</td><td><code>10101</code></td><td>64</td><td><code>1000000</code></td><td>6</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- TEOREMA 1: El más complejo -->
+    <div class="callout">
+        <div class="callout-title">Teorema 1: Decremento del Sufijo</div>
+        <p>Si un número termina en <span id="eq-s-geq-2"></span> unos consecutivos, después de una transición <span id="eq-t1-tn"></span> tendrá exactamente <span id="eq-s-minus-1"></span> unos.</p>
+    </div>
+
+    <div class="proof-box">
+        <div class="proof-title">Demostración</div>
+
+        <p><strong>Paso 1:</strong> Forma general de n</p>
+        <p>Un número que termina en exactamente <em>s</em> unos consecutivos (con un 0 antes) tiene la forma:</p>
+        <div class="equation-block">
+            <span id="eq-t1-form"></span>
+        </div>
+        <p>donde <span id="eq-t1-k"></span> es cualquier entero no negativo. El término <span id="eq-t1-2s1"></span> representa los s unos en binario.</p>
+
+        <p><strong>Verificación:</strong> <span id="eq-t1-verify"></span> siempre produce exactamente <em>s</em> unos:</p>
+        <table>
+            <thead><tr><th>s</th><th><span id="eq-t1-2s1-header"></span></th><th>Binario</th></tr></thead>
+            <tbody>
+                <tr><td>2</td><td>3</td><td><code>11</code></td></tr>
+                <tr><td>3</td><td>7</td><td><code>111</code></td></tr>
+                <tr><td>4</td><td>15</td><td><code>1111</code></td></tr>
+                <tr><td>5</td><td>31</td><td><code>11111</code></td></tr>
+            </tbody>
+        </table>
+
+        <p><strong>Paso 2:</strong> Calculamos <span id="eq-t1-3n1"></span></p>
+        <div class="equation-block">
+            <span id="eq-t1-expand"></span>
+        </div>
+
+        <p><strong>Paso 3:</strong> Factorizamos</p>
+        <div class="equation-block">
+            <span id="eq-t1-factor"></span>
+        </div>
+
+        <p><strong>Paso 4:</strong> El factor entre corchetes es impar</p>
+        <p>Analicemos <span id="eq-t1-bracket"></span>:</p>
+        <ul>
+            <li><span id="eq-t1-term1"></span> es par (contiene <span id="eq-t1-2s"></span> con <span id="eq-t1-sgeq2"></span>)</li>
+            <li><span id="eq-t1-term2"></span> es par (contiene <span id="eq-t1-2s1-factor"></span> con <span id="eq-t1-s1geq1"></span>)</li>
+            <li>par + par − 1 = <strong>impar</strong></li>
+        </ul>
+
+        <p><strong>Paso 5:</strong> Determinamos T(n)</p>
+        <p>Como <span id="eq-t1-structure"></span>, el resultado tiene exactamente un cero al final.</p>
+        <div class="equation-block">
+            <span id="eq-t1-tn-result"></span>
+        </div>
+
+        <p><strong>Paso 6:</strong> Lema clave</p>
+        <div class="callout" style="margin: var(--spacing-md) 0;">
+            <div class="callout-title">Lema</div>
+            <p><span id="eq-lemma"></span> termina en exactamente <span id="eq-lemma-s1"></span> unos.</p>
+        </div>
+
+        <p><em>Prueba del lema:</em></p>
+        <div class="equation-block">
+            <span id="eq-lemma-proof"></span>
+        </div>
+        <p>En binario: <span id="eq-lemma-binary"></span> (s−1 ceros después del 11)</p>
+        <p>Al restar 1: <span id="eq-lemma-subtract"></span> (s−1 unos al final)</p>
+
+        <table>
+            <thead><tr><th>s</th><th><span id="eq-lemma-table-header"></span></th><th>Binario</th><th># unos finales</th></tr></thead>
+            <tbody>
+                <tr><td>2</td><td>5</td><td><code>101</code></td><td>1</td></tr>
+                <tr><td>3</td><td>11</td><td><code>1011</code></td><td>2</td></tr>
+                <tr><td>4</td><td>23</td><td><code>10111</code></td><td>3</td></tr>
+                <tr><td>5</td><td>47</td><td><code>101111</code></td><td>4</td></tr>
+            </tbody>
+        </table>
+
+        <p><strong>Paso 7:</strong> Conclusión</p>
+        <p>El término <span id="eq-t1-final-term"></span> es múltiplo de <span id="eq-t1-final-2s"></span>, por lo que no afecta los últimos <em>s</em> bits de T(n).</p>
+        <p>Por lo tanto, T(n) termina igual que <span id="eq-t1-final-pattern"></span>, es decir, en exactamente <strong>(s−1) unos</strong>.</p>
+
+        <p class="qed">∎</p>
+    </div>
+
+    <p><strong>Verificación numérica completa:</strong></p>
+    <table>
+        <thead>
+            <tr><th>n</th><th>n (binario)</th><th>s antes</th><th>T(n)</th><th>T(n) (binario)</th><th>s después</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>7</td><td><code>111</code></td><td>3</td><td>11</td><td><code>1011</code></td><td>2 ✓</td></tr>
+            <tr><td>15</td><td><code>1111</code></td><td>4</td><td>23</td><td><code>10111</code></td><td>3 ✓</td></tr>
+            <tr><td>31</td><td><code>11111</code></td><td>5</td><td>47</td><td><code>101111</code></td><td>4 ✓</td></tr>
+            <tr><td>23</td><td><code>10111</code></td><td>3</td><td>35</td><td><code>100011</code></td><td>2 ✓</td></tr>
+            <tr><td>55</td><td><code>110111</code></td><td>3</td><td>83</td><td><code>1010011</code></td><td>2 ✓</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h3>¿Por qué importan estos teoremas?</h3>
+
+    <p>Juntos, los teoremas revelan un <strong>contador descendente</strong> en la estructura binaria:</p>
+
+    <div class="equation-block" style="text-align: left; padding-left: 40px;">
+        <span id="eq-cascade"></span>
+    </div>
+
+    <p>Los unos al final actúan como "combustible" que se va gastando. Cuando llega a <em>s = 1</em>, el Teorema 2 garantiza al menos 2 divisiones rápidas entre 2.</p>
 
     <p>Estos teoremas son <strong>verdaderos</strong>. Probados. Rigurosos.</p>
 
@@ -619,7 +795,49 @@ Cinta: infinita (por definición)</code></pre>
         'eq-log23-table': '\\log_2(3)',
         'eq-ap-1': 's \\geq 2 \\to s-1',
         'eq-k-bound': 'k > 10^{68}',
-        'eq-log23-ap': '\\log_2(3)'
+        'eq-log23-ap': '\\log_2(3)',
+
+        // Teorema 2: Ceros Garantizados
+        'eq-t2-form': 'n \\equiv 1 \\pmod{4} \\quad \\Longleftrightarrow \\quad n = 4k + 1',
+        'eq-t2-3n1-inline': '3n + 1',
+        'eq-t2-calc': '3n + 1 = 3(4k + 1) + 1 = 12k + 3 + 1 = 12k + 4 = 4(3k + 1)',
+        'eq-t2-factor': '4(3k + 1)',
+
+        // Teorema 1: Decremento del Sufijo
+        'eq-t1-tn': 'T(n) = (3n+1)/2^a',
+        'eq-t1-form': 'n = 2^{s+1} \\cdot k + (2^s - 1), \\quad k \\geq 0',
+        'eq-t1-k': 'k',
+        'eq-t1-2s1': '2^s - 1',
+        'eq-t1-verify': '2^s - 1',
+        'eq-t1-2s1-header': '2^s - 1',
+        'eq-t1-3n1': '3n + 1',
+        'eq-t1-expand': '\\begin{aligned} 3n + 1 &= 3 \\cdot 2^{s+1} \\cdot k + 3(2^s - 1) + 1 \\\\ &= 3 \\cdot 2^{s+1} \\cdot k + 3 \\cdot 2^s - 3 + 1 \\\\ &= 3 \\cdot 2^{s+1} \\cdot k + 3 \\cdot 2^s - 2 \\end{aligned}',
+        'eq-t1-factor': '3n + 1 = 2 \\cdot \\underbrace{\\left[ 3 \\cdot 2^s \\cdot k + 3 \\cdot 2^{s-1} - 1 \\right]}_{\\text{impar}}',
+        'eq-t1-bracket': '[3 \\cdot 2^s \\cdot k + 3 \\cdot 2^{s-1} - 1]',
+        'eq-t1-term1': '3 \\cdot 2^s \\cdot k',
+        'eq-t1-2s': '2^s',
+        'eq-t1-sgeq2': 's \\geq 2',
+        'eq-t1-term2': '3 \\cdot 2^{s-1}',
+        'eq-t1-2s1-factor': '2^{s-1}',
+        'eq-t1-s1geq1': 's-1 \\geq 1',
+        'eq-t1-structure': '3n + 1 = 2 \\times (\\text{impar})',
+        'eq-t1-tn-result': 'T(n) = \\frac{3n+1}{2} = 3 \\cdot 2^s \\cdot k + 3 \\cdot 2^{s-1} - 1',
+
+        // Lema
+        'eq-lemma': '3 \\cdot 2^{s-1} - 1',
+        'eq-lemma-s1': '(s-1)',
+        'eq-lemma-proof': '3 \\cdot 2^{s-1} = (2 + 1) \\cdot 2^{s-1} = 2^s + 2^{s-1}',
+        'eq-lemma-binary': '11\\underbrace{00\\cdots0}_{s-1}',
+        'eq-lemma-subtract': '11\\underbrace{00\\cdots0}_{s-1} - 1 = 10\\underbrace{11\\cdots1}_{s-1}',
+        'eq-lemma-table-header': '3 \\cdot 2^{s-1} - 1',
+
+        // Conclusión Teorema 1
+        'eq-t1-final-term': '3 \\cdot 2^s \\cdot k',
+        'eq-t1-final-2s': '2^s',
+        'eq-t1-final-pattern': '3 \\cdot 2^{s-1} - 1',
+
+        // Cascada
+        'eq-cascade': '\\begin{aligned} &\\text{n termina en } \\underbrace{111\\cdots1}_{s} \\text{ unos} \\\\ &\\quad \\downarrow T(n) \\\\ &T(n) \\text{ termina en } \\underbrace{111\\cdots1}_{s-1} \\text{ unos} \\\\ &\\quad \\downarrow T^2(n) \\\\ &T^2(n) \\text{ termina en } \\underbrace{111\\cdots1}_{s-2} \\text{ unos} \\\\ &\\quad \\vdots \\\\ &T^{s-1}(n) \\text{ termina en } 1 \\text{ uno} \\rightarrow \\text{Teorema 2 aplica!} \\end{aligned}'
     };
 
     Object.keys(equations).forEach(id => {
